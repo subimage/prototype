@@ -12,6 +12,10 @@ function showextensions( result )
 	var perrow = 1;
 
 	extensions.each(function(ext){
+		if(ext.active === 0)
+		{
+			return;
+		}
 		var t = span.clone(true);
 		t.update(new Element('h3').update(ext.name));
 		if(ext.descrip != undefined)
