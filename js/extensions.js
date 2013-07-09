@@ -6,10 +6,6 @@ function showextensions( result )
 	{
 		extensions = result.responseJSON;
 	}
-	else
-	{
-		extensions = extensions_text.evalJSON();
-	}
 
 	var span = new Element('div',{'class':'extension-blocks'});
 
@@ -38,5 +34,4 @@ function showextensions( result )
 
 document.observe('dom:loaded',function(){
 	new Ajax.Request('js/extension_list.json',{'method':'get','onSuccess':showextensions})
-	showextensions();
 });
