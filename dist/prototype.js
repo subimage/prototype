@@ -747,7 +747,7 @@ Object.extend(String.prototype, (function() {
   }
 
   function include(pattern) {
-    return this.indexOf(pattern) > -1;
+    return this.indexOf(pattern) !== -1;
   }
 
   function startsWith(pattern, position) {
@@ -801,7 +801,7 @@ Object.extend(String.prototype, (function() {
     unfilterJSON:   unfilterJSON,
     isJSON:         isJSON,
     evalJSON:       NATIVE_JSON_PARSE_SUPPORT ? parseJSON : evalJSON,
-    include:        include,
+    include:        String.prototype.contains || include,
     startsWith:     String.prototype.startsWith || startsWith,
     endsWith:       String.prototype.endsWith || endsWith,
     empty:          empty,
