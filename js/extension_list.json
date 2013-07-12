@@ -54,5 +54,12 @@
 		"demo":"fullcolorpicker.html",
 		"github":"https://github.com/jwestbrook/Prototype.FullColorPicker",
 		"active":0
+	},
+	{
+		"name":"Formalize CSS",
+		"descrip":"Teach your forms some manners! http://formalize.me",
+		"github":"https://github.com/nathansmith/formalize",
+		"demo":"formalizeme.html",
+		"active":1
 	}
 ]

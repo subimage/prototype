@@ -20,7 +20,15 @@ function showextensions( result )
 		t.update(new Element('h3').update(ext.name));
 		if(ext.descrip != undefined)
 		{
-			t.insert(new Element('p').update(ext.descrip));
+			if(ext.descrip.match('http://'))
+			{
+				//if there is a link in the description create it
+				t.insert(new Element('p').update(ext.descrip));
+			}
+			else
+			{
+				t.insert(new Element('p').update(ext.descrip));
+			}
 		}
 		if(ext.demo != undefined && ext.demo.length > 0)
 		{

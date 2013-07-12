@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PrototypeJS Tutorials and Extensions</title>
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/styles.css" />
+    <link rel="stylesheet" type="text/css" href="../css/prettify.css"/>
+    <link rel="stylesheet" href="formalize.css" />
+    <script type="text/javascript" src="../js/prototype.js"></script>
+    <script type="text/javascript" src="../js/scriptaculous.js?load=effects,controls,slider,dragdrop"></script>
+    <script type="text/javascript" src="../js/bootstrap_prototype.js"></script>
+    <script type="text/javascript" src="../js/prettify.js"></script>
+    <script src="../js/prototype.formalize.js"></script>
+  </head>
+  </head>
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">PrototypeJS</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li><a href="../">Home</a></li>
+              <li><a href="../tutorials.html">Tutorials</a></li>
+              <li><a href="../extensions.html">Extensions</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+    <div class="container container-fluid">
+      <div class="hero-unit">
+        <h1>Formalize - Teach Your Forms some Manners</h1>
+        <p></p>
+        <iframe src="http://ghbtns.com/github-btn.html?user=nathansmith&repo=formalize&type=watch&count=true&size=large"
+  allowtransparency="true" frameborder="0" scrolling="0" width="170" height="30"></iframe>
+      </div>
+      <div class="row-fluid">
+        <div class="span12">
+          <div id="wrapper">
+            <h1>
+              Example of all form elements
+            </h1>
+            <form action="#" method="post" enctype="multipart/form-data" onsubmit="return false">
+              <p>
+                <input type="checkbox" id="test_checkbox_1" name="test_checkbox_1" />
+                <label for="test_checkbox_1">
+                  Test checkbox 1
+                </label>
+                &nbsp;
+                &nbsp;
+                <input type="checkbox" id="test_checkbox_2" name="test_checkbox_2" />
+                <label for="test_checkbox_2">
+                  Test checkbox 2
+                </label>
+                &nbsp;
+                &nbsp;
+                <input type="checkbox" id="test_checkbox_3" name="test_checkbox_3" />
+                <label for="test_checkbox_3">
+                  Test checkbox 3
+                </label>
+              </p>
+              <p>
+                <input type="radio" id="test_radio_1" name="test_radio_group" />
+                <label for="test_radio_1">
+                  Test radio 1
+                </label>
+                &nbsp;
+                &nbsp;
+                <input type="radio" id="test_radio_2" name="test_radio_group" />
+                <label for="test_radio_2">
+                  Test radio 2
+                </label>
+                &nbsp;
+                &nbsp;
+                <input type="radio" id="test_radio_3" name="test_radio_group" />
+                <label for="test_radio_3">
+                  Test radio 3
+                </label>
+              </p>
+              <p>
+                <label for="select_dd">
+                  Select drop-down
+                </label>
+                <br />
+                <select id="select_dd" name="select_dd">
+                  <optgroup label="Group 1">
+                    <option value="1">Some text goes here</option>
+                    <option value="2">Another choice could be here</option>
+                    <option value="3">Yet another item to be chosen</option>
+                  </optgroup>
+                  <optgroup label="Group 2">
+                    <option value="4">Some text goes here</option>
+                    <option value="5">Another choice could be here</option>
+                    <option value="6">Yet another item to be chosen</option>
+                  </optgroup>
+                  <optgroup label="Group 3">
+                    <option value="7">Some text goes here</option>
+                    <option value="8">Another choice could be here</option>
+                    <option value="9">Yet another item to be chosen</option>
+                  </optgroup>
+                </select>
+                <input type="text" id="text_inline" name="text_inline" />
+                <input type="button" value="Input Button" />
+                <button>Button Tag</button>
+                <a href="#" class="button">Link Button</a>
+              </p>
+              <p>
+                <label for="select_multi">
+                  Select multiple
+                </label>
+                <br />
+                <select id="select_multi" name="select_multi" multiple="multiple" size="10">
+                  <optgroup label="Group 1">
+                    <option value="1">Some text goes here</option>
+                    <option value="2">Another choice could be here</option>
+                    <option value="3">Yet another item to be chosen</option>
+                  </optgroup>
+                  <optgroup label="Group 2">
+                    <option value="4">Some text goes here</option>
+                    <option value="5">Another choice could be here</option>
+                    <option value="6">Yet another item to be chosen</option>
+                  </optgroup>
+                  <optgroup label="Group 3">
+                    <option value="7">Some text goes here</option>
+                    <option value="8">Another choice could be here</option>
+                    <option value="9">Yet another item to be chosen</option>
+                  </optgroup>
+                </select>
+              </p>
+              <p>
+                <label for="textarea">
+                  Textarea
+                </label>
+                <br />
+                <textarea id="textarea" name="textarea" rows="5" placeholder="This is an example of HTML5 placeholder text."></textarea>
+              </p>
+              <table class="horiz">
+                <tr>
+                  <td>
+                    <label for="url">
+                      URL + Autofocus
+                    </label>
+                    <br />
+                    <input type="url" id="url" name="url" value="http://" autofocus="autofocus" />
+                  </td>
+                  <td>
+                    <label for="email">
+                      Email
+                    </label>
+                    <br />
+                    <input type="email" id="email" name="email" placeholder="name@example.com" />
+                  </td>
+                  <td>
+                    <label for="password">
+                      Password
+                    </label>
+                    <br />
+                    <input type="password" id="password" name="password" placeholder="Alphanumeric123!" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label for="datetime-local">
+                      Datetime local
+                    </label>
+                    <br />
+                    <input type="datetime-local" id="datetime-local" name="datetime-local" />
+                  </td>
+                  <td>
+                    <label for="number">
+                      Number
+                    </label>
+                    <br />
+                    <input type="number" id="number" name="number" min="0" max="999" step="1" />
+                  </td>
+                  <td>
+                    <label for="tel">
+                      Tel (phone)
+                    </label>
+                    <br />
+                    <input type="tel" id="tel" name="tel" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label for="datetime">
+                      Datetime
+                    </label>
+                    <br />
+                    <input type="datetime" id="datetime" name="datetime" />
+                  </td>
+                  <td>
+                    <label for="date">
+                      Date
+                    </label>
+                    <br />
+                    <input type="date" id="date" name="date" />
+                  </td>
+                  <td>
+                    <label for="month">
+                      Month
+                    </label>
+                    <br />
+                    <input type="month" id="month" name="month" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label for="search">
+                      Search
+                    </label>
+                    <br />
+                    <input type="search" id="search" name="search" />
+                  </td>
+                  <td>
+                    <label for="range">
+                      Range
+                    </label>
+                    <br />
+                    <input type="range" id="range" name="range" />
+                  </td>
+                  <td>
+                    <label for="file">
+                      File upload
+                    </label>
+                    <br />
+                    <input type="file" id="file" name="file" />
+                  </td>
+                </tr>
+              </table>
+              <p>
+                <input type="submit" value="Input - Submit" />
+                &nbsp;
+                <input type="button" value="Input - Button" />
+                &nbsp;
+                <input type="reset" value="Input - Reset" />
+                &nbsp;
+                <button>Button tag</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </body>
+</html>
