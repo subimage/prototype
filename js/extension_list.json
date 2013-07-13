@@ -59,7 +59,7 @@
 		"name":"Formalize CSS",
 		"descrip":"Teach your forms some manners! http://formalize.me",
 		"github":"https://github.com/nathansmith/formalize",
-		"demo":"formalizeme.html",
+		"demo":"formalize.html",
 		"active":1
 	}
 ]
