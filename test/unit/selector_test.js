@@ -103,7 +103,12 @@ new Test.Unit.Runner({
     this.assertEnumEqual($('chk_1', 'chk_2'), $$('#troubleForm2 input[name="brackets[5][]"]'));
     this.assertEnumEqual([$('chk_1')], $$('#troubleForm2 input[name="brackets[5][]"]:checked'));
     this.assertEnumEqual([$('chk_2')], $$('#troubleForm2 input[name="brackets[5][]"][value=2]'));
-    this.assertEnumEqual([], $$('#troubleForm2 input[name=brackets[5][]]'));
+    try{
+      $$('#troubleForm2 input[name=brackets[5][]]');
+      this.error('Error Not thrown')
+    } catch (e){
+      this.info('Error thrown')
+    }
   },
   
   test$$WithNestedAttributeSelectors: function() {
@@ -286,7 +291,7 @@ new Test.Unit.Runner({
   
   testSelectorWithEnabledDisabledChecked: function() {
     this.assertEnumEqual([$('disabled_text_field')], $$('#troubleForm > *:disabled'), ':disabled');
-    this.assertEnumEqual($('troubleForm').getInputs().without($('disabled_text_field'), $('hidden')), $$('#troubleForm > *:enabled'), ':enabled');
+    this.assertEnumEqual($('troubleForm').getInputs().without($('disabled_text_field')), $$('#troubleForm > *:enabled'), ':enabled');
     this.assertEnumEqual($('checked_box', 'checked_radio'), $$('#troubleForm *:checked'), ':checked');
   },
   
@@ -321,7 +326,7 @@ new Test.Unit.Runner({
 
   testCommasFor$$: function() {
     this.assertEnumEqual($('p', 'link_1', 'list', 'item_1', 'item_3', 'troubleForm'), $$('#list, .first,#item_3 , #troubleForm'));
-    this.assertEnumEqual($('p', 'link_1', 'list', 'item_1', 'item_3', 'troubleForm'), $$('#list, .first,', '#item_3 , #troubleForm'));
+    this.assertEnumEqual($('p', 'link_1', 'list', 'item_1', 'item_3', 'troubleForm'), $$('#list, .first', '#item_3 , #troubleForm'));
     this.assertEnumEqual($('commaParent', 'commaChild'), $$('form[title*="commas,"], input[value="#commaOne,#commaTwo"]'));
     this.assertEnumEqual($('commaParent', 'commaChild'), $$('form[title*="commas,"]', 'input[value="#commaOne,#commaTwo"]'));
   },
