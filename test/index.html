@@ -1,0 +1,56 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>PrototypeJS Simple Tests</title>
+	<link rel="stylesheet" href="mocha.css" />
+</head>
+<body>
+	<div id="mocha"></div>
+	<script src="../dist/prototype.min.js"></script>
+	<script src="mocha.js"></script>
+	<script>mocha.setup('tdd')</script>
+	<script>
+		function assert(expr, msg) {
+			if (!expr) throw new Error(msg || 'failed');
+		}
+		function assertenum(varA, varB, msg){
+			if(varA.length !== varB.length) throw new Error(msg || 'failed')
+			Object.keys(varA).each(function(t){
+				if(varA[t] !== varB[t]) throw new Error(msg || 'failed')
+			});
+			return true;
+		}
+		function assertRespondsTo(method, obj, msg) {
+			var message = arguments[2] || 'assertRespondsTo';
+			try {
+				if(!(obj[method] && typeof obj[method] == 'function'))
+				{
+					throw new Error(msg + ": object doesn't respond to [" + method + "]");
+				}
+			}
+			catch(e) { throw new Error(e); }
+		}
+		function info(msg){
+			console.log(msg)
+		}
+	</script>
+	<script src="unit/base.test.js"></script>
+	<script src="unit/array.test.js"></script>
+	<script src="unit/class.test.js"></script>
+	<script src="unit/date.test.js"></script>
+	<script src="unit/enumerable.test.js"></script>
+	<script>
+		mocha.checkLeaks();
+		if (window.mochaPhantomJS)
+		{
+			mochaPhantomJS.run(); 
+		}
+		else
+		{
+			mocha.run();
+		}
+		</script>
+	<div id="testfixture"></div>
+	<a href="domtests.html" target="_blank">DOM Interaction Tests</a>
+</body>
+</html>
