@@ -1,9 +1,9 @@
 var globalArgsTest = 'nothing to see here';
 
 suite('Array Namespace',function(){
-
+	this.timeout(0)
 	test('$A({}) should equal []',function(){
-		assertenum([], $A({}),"$A({}) != []")
+		assert.deepEqual([], $A({}),"$A({}) != []")
 	});
 	
 	test('use $A() on function arguments',function(){
@@ -11,11 +11,11 @@ suite('Array Namespace',function(){
 			globalArgsTest = $A(arguments);
 		}
 		toArrayOnArguments();
-		assertenum([],globalArgsTest,"globalArgsTest != []");
+		assert.deepEqual([],globalArgsTest,"globalArgsTest != []");
 		toArrayOnArguments('foo');
-		assertenum(['foo'],globalArgsTest,"globalArgsTest != ['foo']");
+		assert.deepEqual(['foo'],globalArgsTest,"globalArgsTest != ['foo']");
 		toArrayOnArguments('foo','bar');
-		assertenum(['foo','bar'],globalArgsTest,"globalArgsTest != ['foo','bar']");
+		assert.deepEqual(['foo','bar'],globalArgsTest,"globalArgsTest != ['foo','bar']");
 	});
 
 	test('use $A() On NodeList',function(){
@@ -35,32 +35,32 @@ suite('Array Namespace',function(){
 	});
 	
 	test("use $A() On Primitive values",function() {
-		assertenum(['a', 'b', 'c'], $A('abc'));
-		assertenum([], $A(''));
-		assertenum([], $A(null));
-		assertenum([], $A(undefined));
-		assertenum([], $A());
-		assertenum([], $A(5));
-		assertenum([], $A(true));
+		assert.deepEqual(['a', 'b', 'c'], $A('abc'));
+		assert.deepEqual([], $A(''));
+		assert.deepEqual([], $A(null));
+		assert.deepEqual([], $A(undefined));
+		assert.deepEqual([], $A());
+		assert.deepEqual([], $A(5));
+		assert.deepEqual([], $A(true));
 	});
 	suite('Instance Methods',function(){
 		test(".clear() method",function(){
-			assertenum([], [].clear());
-			assertenum([], [1].clear());
-			assertenum([], [1,2].clear());
+			assert.deepEqual([], [].clear());
+			assert.deepEqual([], [1].clear());
+			assert.deepEqual([], [1,2].clear());
 		});
 		
 		test(".clone() method",function(){
-			assertenum([], [].clone());
-			assertenum([1], [1].clone());
-			assertenum([1,2], [1,2].clone());
-			assertenum([0,1,2], [0,1,2].clone());
+			assert.deepEqual([], [].clone());
+			assert.deepEqual([1], [1].clone());
+			assert.deepEqual([1,2], [1,2].clone());
+			assert.deepEqual([0,1,2], [0,1,2].clone());
 			var a = [0,1,2];
 			var b = a;
-			assertenum(a, b);
+			assert.deepEqual(a, b);
 			b = a.clone();
 			try{
-				assertenum(a, b)
+				assert.deepEqual(a, b)
 			} catch (e) {
 				assert(e,"Error not thrown")
 			}
@@ -79,18 +79,18 @@ suite('Array Namespace',function(){
 		});
 		
 		test(".compact() method",function(){
-			assertenum([],[].compact(),"[] != [].compact()");
-			assertenum([1,2,3], [1,2,3].compact(),"[1,2,3] != [1,2,3].compact()");
-			assertenum([0,1,2,3], [0,null,1,2,undefined,3].compact(),"[0,1,2,3] != [0,null,1,2,undefined,3].compact()");
-			assertenum([1,2,3], [null,1,2,3,null].compact(),"[1,2,3] != [null,1,2,3,null].compact()");
+			assert.deepEqual([],[].compact(),"[] != [].compact()");
+			assert.deepEqual([1,2,3], [1,2,3].compact(),"[1,2,3] != [1,2,3].compact()");
+			assert.deepEqual([0,1,2,3], [0,null,1,2,undefined,3].compact(),"[0,1,2,3] != [0,null,1,2,undefined,3].compact()");
+			assert.deepEqual([1,2,3], [null,1,2,3,null].compact(),"[1,2,3] != [null,1,2,3,null].compact()");
 		});
 		
 		test(".flatten() method",function(){
-			assertenum([],      [].flatten(),"[] != [].flatten()");
-			assertenum([1,2,3], [1,2,3].flatten(),"[1,2,3] != [1,2,3].flatten()");
-			assertenum([1,2,3], [1,[[[2,3]]]].flatten(),"[1,2,3] != [1,[[[2,3]]]].flatten()");
-			assertenum([1,2,3], [[1],[2],[3]].flatten(),"[1,2,3] != [[1],[2],[3]].flatten()");
-			assertenum([1,2,3], [[[[[[[1]]]]]],2,3].flatten(),"[1,2,3] != [[[[[[[1]]]]]],2,3].flatten()");
+			assert.deepEqual([],      [].flatten(),"[] != [].flatten()");
+			assert.deepEqual([1,2,3], [1,2,3].flatten(),"[1,2,3] != [1,2,3].flatten()");
+			assert.deepEqual([1,2,3], [1,[[[2,3]]]].flatten(),"[1,2,3] != [1,[[[2,3]]]].flatten()");
+			assert.deepEqual([1,2,3], [[1],[2],[3]].flatten(),"[1,2,3] != [[1],[2],[3]].flatten()");
+			assert.deepEqual([1,2,3], [[[[[[[1]]]]]],2,3].flatten(),"[1,2,3] != [[[[[[[1]]]]]],2,3].flatten()");
 		});
 		
 		test(".indexOf() method",function(){
@@ -126,7 +126,7 @@ suite('Array Namespace',function(){
 
 			var fixture = [1,2,3,4,3];
 			assert(4, fixture.lastIndexOf(3));
-			assertenum([1,2,3,4,3],fixture);
+			assert.deepEqual([1,2,3,4,3],fixture);
 
 			//tests from http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf
 			var array = [2, 5, 9, 2];
@@ -146,23 +146,23 @@ suite('Array Namespace',function(){
 		});
 		
 		test(".intersect() method",function(){
-			assertenum([1,3], [1,1,3,5].intersect([1,2,3]));
-			assertenum([0,1], [0,1,2].intersect([0,1]));
-			assertenum([1], [1,1].intersect([1,1]));
-			assertenum([], [1,1,3,5].intersect([4]));
-			assertenum([], [1].intersect(['1']));
+			assert.deepEqual([1,3], [1,1,3,5].intersect([1,2,3]));
+			assert.deepEqual([0,1], [0,1,2].intersect([0,1]));
+			assert.deepEqual([1], [1,1].intersect([1,1]));
+			assert.deepEqual([], [1,1,3,5].intersect([4]));
+			assert.deepEqual([], [1].intersect(['1']));
 
-			assertenum(
+			assert.deepEqual(
 				['B','C','D'], 
 				$R('A','Z').toArray().intersect($R('B','D').toArray())
 			);
 		});
 		
 		test(".reverse() method",function(){
-			assertenum([], [].reverse());
-			assertenum([1], [1].reverse());
-			assertenum([2,1], [1,2].reverse());
-			assertenum([3,2,1], [1,2,3].reverse());
+			assert.deepEqual([], [].reverse());
+			assert.deepEqual([1], [1].reverse());
+			assert.deepEqual([2,1], [1,2].reverse());
+			assert.deepEqual([3,2,1], [1,2,3].reverse());
 		});
 		
 		test(".size() method", function(){
@@ -171,31 +171,31 @@ suite('Array Namespace',function(){
 		});
 
 		test(".uniq() method", function(){
-			assertenum([1], [1, 1, 1].uniq());
-			assertenum([1], [1].uniq());
-			assertenum([], [].uniq());
-			assertenum([0, 1, 2, 3], [0, 1, 2, 2, 3, 0, 2].uniq());
-			assertenum([0, 1, 2, 3], [0, 0, 1, 1, 2, 3, 3, 3].uniq(true));
+			assert.deepEqual([1], [1, 1, 1].uniq());
+			assert.deepEqual([1], [1].uniq());
+			assert.deepEqual([], [].uniq());
+			assert.deepEqual([0, 1, 2, 3], [0, 1, 2, 2, 3, 0, 2].uniq());
+			assert.deepEqual([0, 1, 2, 3], [0, 0, 1, 1, 2, 3, 3, 3].uniq(true));
 		});
 		
 		test(".without() method",function(){
-			assertenum([], [].without(0));
-			assertenum([], [0].without(0));
-			assertenum([1], [0,1].without(0));
-			assertenum([1,2], [0,1,2].without(0));
+			assert.deepEqual([], [].without(0));
+			assert.deepEqual([], [0].without(0));
+			assert.deepEqual([1], [0,1].without(0));
+			assert.deepEqual([1,2], [0,1,2].without(0));
 		});
 		test(".concat() method", function() {
 			var x = {};
 
 			assert(1 === Array.prototype.concat.length);
 
-			assertenum([0, 1],[0, 1].concat(),"test 2");
+			assert.deepEqual([0, 1],[0, 1].concat(),"test 2");
 			assert(2 === [0, 1].concat().length, "test 3");
 
-			assertenum([0, 1, 2, 3, 4],[].concat([0, 1], [2, 3, 4]),"test 4");
+			assert.deepEqual([0, 1, 2, 3, 4],[].concat([0, 1], [2, 3, 4]),"test 4");
 			assert(5 === [].concat([0, 1], [2, 3, 4]).length, "test 5");
 
-			assertenum([0, x, 1, 2, true, "NaN"], [0].concat(x, [1, 2], true, "NaN"), "test 6");
+			assert.deepEqual([0, x, 1, 2, true, "NaN"], [0].concat(x, [1, 2], true, "NaN"), "test 6");
 			assert(6 === [0].concat(x, [1, 2], true, "NaN").length, "test 7");
 
 
@@ -203,7 +203,6 @@ suite('Array Namespace',function(){
 			// Nothing we can do about that, so just skip them and let the user know.
 			if ([,].length === 2)
 			{
-
 				console.log("NOTE: Old versions of IE don't like trailing commas in arrays. Skipping some tests.");
 			}
 			else
@@ -216,22 +215,22 @@ suite('Array Namespace',function(){
 
 			// Check that Array.prototype.concat can be used in a generic way
 			x.concat = Array.prototype.concat;
-			assertenum([x], x.concat(),"test 11");
+			assert.deepEqual([x], x.concat(),"test 11");
 			assert(1 === x.concat().length,"test 12");
 
 			// Checking an edge case
 			var arr = []; arr[2] = true;
 			assertenum([undefined, undefined, true], [].concat(arr),"test 13");
 			assert(3 === [].concat(arr).length,"test 14");
-			assertenum(["2"], Object.keys([].concat(arr)),"test 15");
+			assert.deepEqual(["2"], Object.keys([].concat(arr)),"test 15");
 
 			var args = (function() { return [].concat(arguments) })(1, 2);
 			assert(1 === args[0][0],"test 16");
 		});
 
 		test(".map() method",function() {
-			assertenum([1,2,3], [1,2,3].map());
-			assertenum([2,4,6], [1,2,3].map(function(x) { return x * 2; }));
+			assert.deepEqual([1,2,3], [1,2,3].map());
+			assert.deepEqual([2,4,6], [1,2,3].map(function(x) { return x * 2; }));
 
 			var x = [1,2,3,4];
 			delete x[1];
@@ -243,19 +242,19 @@ suite('Array Namespace',function(){
 			x.map(function(val) {
 				traversed.push(val);
 			});
-			assertenum([1, 3], traversed);
+			assert.deepEqual([1, 3], traversed);
 			assert(2 === traversed.length);
 		});
 
 		test(".findAll() method", function() {
-			assertenum([2, 4, 6], [1, 2, 3, 4, 5, 6].findAll(function(x) {
+			assert.deepEqual([2, 4, 6], [1, 2, 3, 4, 5, 6].findAll(function(x) {
 				return (x % 2) == 0;
 			}));
 
 			var x = [1,2,3], traversed = [];
 			delete x[1];
 			x.findAll(function(val) { traversed.push(val); });
-			assertenum([1, 3], traversed);
+			assert.deepEqual([1, 3], traversed);
 			assert(2 === traversed.length);
 		});
 
@@ -276,7 +275,7 @@ suite('Array Namespace',function(){
 			var x = [1,2,3], traversed = [];
 			delete x[1];
 			x.any(function(val) { traversed.push(val); });
-			assertenum([1, 3], traversed);
+			assert.deepEqual([1, 3], traversed);
 			assert(2 === traversed.length);
 		});
 		test(".all() method",function() {
@@ -296,23 +295,23 @@ suite('Array Namespace',function(){
 			var x = [1,2,3], traversed = [];
 			delete x[1];
 			x.all(function(val) { traversed.push(val); return true; });
-			assertenum([1, 3], traversed);
+			assert.deepEqual([1, 3], traversed);
 			assert(2, traversed.length);
 		});
 	});
 	
 	test("$w()",function(){
-		assertenum(['a', 'b', 'c', 'd'], $w('a b c d'));
-		assertenum([], $w(' '));
-		assertenum([], $w(''));
-		assertenum([], $w(null));
-		assertenum([], $w(undefined));
-		assertenum([], $w());
-		assertenum([], $w(10));
-		assertenum(['a'], $w('a'));
-		assertenum(['a'], $w('a '));
-		assertenum(['a'], $w(' a'));
-		assertenum(['a', 'b', 'c', 'd'], $w(' a   b\nc\t\nd\n'));
+		assert.deepEqual(['a', 'b', 'c', 'd'], $w('a b c d'));
+		assert.deepEqual([], $w(' '));
+		assert.deepEqual([], $w(''));
+		assert.deepEqual([], $w(null));
+		assert.deepEqual([], $w(undefined));
+		assert.deepEqual([], $w());
+		assert.deepEqual([], $w(10));
+		assert.deepEqual(['a'], $w('a'));
+		assert.deepEqual(['a'], $w('a '));
+		assert.deepEqual(['a'], $w(' a'));
+		assert.deepEqual(['a', 'b', 'c', 'd'], $w(' a   b\nc\t\nd\n'));
 	});
 	
 	
@@ -328,7 +327,7 @@ suite('Array Namespace',function(){
 	
 	test(".map() Generic", function() {
 		var result = Array.prototype.map.call({0:0, 1:1, length:2});
-		assertenum([0, 1], result);
+		assert.deepEqual([0, 1], result);
 	});
 	
 
@@ -337,7 +336,7 @@ suite('Array Namespace',function(){
 		var result = Array.prototype.findAll.call({0:0, 1:1, length:2}, function(x) {
 			return x === 1;
 		});
-		assertenum([1], result);
+		assert.deepEqual([1], result);
 	});
 	
 

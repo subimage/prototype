@@ -85,7 +85,7 @@ var Ox = Class.create(Animal, Sellable, Reproduceable, {
 suite("Class Namespace",function(){
   test("Class Create()",function() {
     assert(Object.isFunction(Animal), 'Animal is not a constructor');
-    assertenum([Cat, Mouse, Dog, Ox], Animal.subclasses);
+    assert.deepEqual([Cat, Mouse, Dog, Ox], Animal.subclasses);
     Animal.subclasses.each(function(subclass) {
       assert(Animal === subclass.superclass);
     }, this);
@@ -93,7 +93,7 @@ suite("Class Namespace",function(){
     var Bird = Class.create(Animal);
     assert(Bird === Animal.subclasses.last());
     // for..in loop (for some reason) doesn't iterate over the constructor property in top-level classes
-    assertenum(Object.keys(new Animal).sort(), Object.keys(new Bird).without('constructor').sort());
+    assert.deepEqual(Object.keys(new Animal).sort(), Object.keys(new Bird).without('constructor').sort());
   });
 
 	test("Class Instantiation",function() {
