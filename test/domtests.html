@@ -8,18 +8,17 @@
 	<div id="mocha"></div>
 	<script src="../dist/prototype.min.js"></script>
 	<script src="mocha.js"></script>
+  <script src="chai.js"></script>
 	<script>mocha.setup('tdd')</script>
 	<script>
-		function assert(expr, msg) {
-			if (!expr) throw new Error(msg || 'failed');
-		}
-		function assertenum(varA, varB, msg){
-			if(varA.length !== varB.length) throw new Error(msg || 'failed')
-			Object.keys(varA).each(function(t){
-				if(varA[t] !== varB[t]) throw new Error(msg || 'failed')
-			});
-			return true;
-		}
+    var assert = chai.assert;
+    function assertenum(varA, varB, msg){
+      if(varA.length !== varB.length) throw new Error(msg || 'failed')
+      Object.keys(varA).each(function(t){
+        if(varA[t] !== varB[t]) throw new Error(msg || 'failed')
+      });
+      return true;
+    }
 		function assertRespondsTo(method, obj, msg) {
 			var message = arguments[2] || 'assertRespondsTo';
 			try {
@@ -33,10 +32,21 @@
 		function info(msg){
 			console.log(msg)
 		}
+    function assertElementsMatch() {
+      var expressions = $A(arguments), elements = $A(expressions.shift());
+      if (elements.length != expressions.length) {
+        throw new Error('assertElementsMatch: size mismatch: ' + elements.length + ' elements, ' + expressions.length + ' expressions');
+        return false;
+      }
+      elements.zip(expressions).all(function(pair, index) {
+        var element = $(pair.first()), expression = pair.last();
+        if (element.match(expression)) return true;
+        throw new Error('assertElementsMatch: (in index ' + index + ') expected ' + expression.inspect() + ' but got ' + element.inspect());
+      });
+    }
 	</script>
 	<script src="unit/dom.test.js"></script>
 	<script>
-		mocha.checkLeaks();
 		if (window.mochaPhantomJS)
 		{
 			mochaPhantomJS.run(); 
@@ -239,10 +249,10 @@
 <div id="floating_inline" style="float:left">FI</div>
 <div id="floating_style">FS</div>
 <!-- Test Element opacity functions -->
-<img id="op1" alt="op2" src="fixtures/logo.gif" style="opacity:0.5;filter:alpha(opacity=50)" />
-<img id="op2" alt="op2" src="fixtures/logo.gif"/>
-<img id="op3" alt="op3" src="fixtures/logo.gif"/>
-<img id="op4-ie" alt="op3" src="fixtures/logo.gif" style="filter:alpha(opacity=30)" />
+<img id="op1" alt="op2" src="logo.gif" style="opacity:0.5;filter:alpha(opacity=50)" />
+<img id="op2" alt="op2" src="logo.gif"/>
+<img id="op3" alt="op3" src="logo.gif"/>
+<img id="op4-ie" alt="op3" src="logo.gif" style="filter:alpha(opacity=30)" />
 <div id="dimensions-visible"></div>
 <div id="dimensions-display-none"></div>
 <div id="dimensions-visible-pos-rel"></div>
