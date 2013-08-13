@@ -179,16 +179,16 @@ suite("Enumerable Namespace",function(){
   });
   
   test(".eachSlice() method",function() {
-    assertenum([], [].eachSlice(2));
+    assert.deepEqual([], [].eachSlice(2));
     assert(1 === [1].eachSlice(1).length);
-    assertenum([1], [1].eachSlice(1)[0]);
+    assert.deepEqual([1], [1].eachSlice(1)[0]);
     assert(2 === Fixtures.Basic.eachSlice(2).length);
-    assertenum(
+    assert.deepEqual(
       [3, 2, 1, 11, 7, 5, 19, 17, 13, 31, 29, 23, 43, 41, 37, 59, 53, 47, 71, 67, 61, 83, 79, 73, 97, 89],
       Fixtures.Primes.eachSlice( 3, function(slice){ return slice.reverse() }).flatten()
     );
-    assertenum(Fixtures.Basic, Fixtures.Basic.eachSlice(-10));
-    assertenum(Fixtures.Basic, Fixtures.Basic.eachSlice(0));
+    assert.deepEqual(Fixtures.Basic, Fixtures.Basic.eachSlice(-10));
+    assert.deepEqual(Fixtures.Basic, Fixtures.Basic.eachSlice(0));
     assert(Fixtures.Basic !== Fixtures.Basic.eachSlice(0));
   });
   
@@ -228,28 +228,28 @@ suite("Enumerable Namespace",function(){
         return nickname.toUpperCase();
       }).join(", "))
 
-    // assertenum($('grepHeader', 'grepCell'),
+    // assert.deepEqual($('grepHeader', 'grepCell'),
     //   $('grepTable', 'grepTBody', 'grepRow', 'grepHeader', 'grepCell').grep(new Selector('.cell')));
 
     // troublesome characters
-    assertenum(['?a', 'c?'], ['?a','b','c?'].grep('?'));
-    assertenum(['*a', 'c*'], ['*a','b','c*'].grep('*'));
-    assertenum(['+a', 'c+'], ['+a','b','c+'].grep('+'));
-    assertenum(['{1}a', 'c{1}'], ['{1}a','b','c{1}'].grep('{1}'));
-    assertenum(['(a', 'c('], ['(a','b','c('].grep('('));
-    assertenum(['|a', 'c|'], ['|a','b','c|'].grep('|'));
+    assert.deepEqual(['?a', 'c?'], ['?a','b','c?'].grep('?'));
+    assert.deepEqual(['*a', 'c*'], ['*a','b','c*'].grep('*'));
+    assert.deepEqual(['+a', 'c+'], ['+a','b','c+'].grep('+'));
+    assert.deepEqual(['{1}a', 'c{1}'], ['{1}a','b','c{1}'].grep('{1}'));
+    assert.deepEqual(['(a', 'c('], ['(a','b','c('].grep('('));
+    assert.deepEqual(['|a', 'c|'], ['|a','b','c|'].grep('|'));
   });
   
-  // "test #grep passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.grep(/\d/, function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value;
-  //   }, this);
-  // },
+  test(".grep() passes value, index and collection to the iterator", function() {
+    var i = 0;
+    Fixtures.Basic.grep(/\d/, function(value, index, collection) {
+      assert.strictEqual(value,Fixtures.Basic[i]);
+      assert.strictEqual(index, i);
+      assert.strictEqual(collection,Fixtures.Basic);
+      i++;
+      return value;
+    }, this);
+  });
   
   // testInclude: function() {
   //   this.assert(Fixtures.Nicknames.include('sam-'));
