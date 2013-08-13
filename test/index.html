@@ -1,18 +1,21 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>PrototypeJS Simple Tests</title>
+	<title>PrototypeJS Base Tests</title>
 	<link rel="stylesheet" href="mocha.css" />
 </head>
 <body>
+	<ul>
+		<li>Base Tests</li>
+		<li><a href="domtests.html" target="_blank">DOM Interaction Tests</a></li>
+	</ul>
 	<div id="mocha"></div>
 	<script src="../dist/prototype.min.js"></script>
 	<script src="mocha.js"></script>
+	<script src="chai.js"></script>
 	<script>mocha.setup('tdd')</script>
 	<script>
-		function assert(expr, msg) {
-			if (!expr) throw new Error(msg || 'failed');
-		}
+		var assert = chai.assert;
 		function assertenum(varA, varB, msg){
 			if(varA.length !== varB.length) throw new Error(msg || 'failed')
 			Object.keys(varA).each(function(t){
@@ -40,7 +43,6 @@
 	<script src="unit/date.test.js"></script>
 	<script src="unit/enumerable.test.js"></script>
 	<script>
-		mocha.checkLeaks();
 		if (window.mochaPhantomJS)
 		{
 			mochaPhantomJS.run(); 
@@ -51,6 +53,5 @@
 		}
 		</script>
 	<div id="testfixture"></div>
-	<a href="domtests.html" target="_blank">DOM Interaction Tests</a>
 </body>
 </html>
