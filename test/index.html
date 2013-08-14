@@ -7,12 +7,12 @@
 <body>
 	<ul>
 		<li>Base Tests</li>
-		<li><a href="domtests.html" target="_blank">DOM Interaction Tests</a></li>
+		<li><a href="domtests.html">DOM Interaction Tests</a></li>
 	</ul>
 	<div id="mocha"></div>
-	<script src="../dist/prototype.min.js"></script>
 	<script src="mocha.js"></script>
 	<script src="chai.js"></script>
+	<script src="../dist/prototype.min.js"></script>
 	<script>mocha.setup('tdd')</script>
 	<script>
 		var assert = chai.assert;
@@ -42,6 +42,7 @@
 	<script src="unit/class.test.js"></script>
 	<script src="unit/date.test.js"></script>
 	<script src="unit/enumerable.test.js"></script>
+	<script src="unit/element_mixins.test.js"></script>
 	<script>
 		if (window.mochaPhantomJS)
 		{
@@ -53,5 +54,12 @@
 		}
 		</script>
 	<div id="testfixture"></div>
+	<div id="testlog"></div>
+
+	<form id="form">
+	  <input type="text" id="input" value="4" />
+	  <input type="submit" />
+	</form>
+
 </body>
 </html>
