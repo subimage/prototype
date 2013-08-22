@@ -1,35 +1,50 @@
-new Test.Unit.Runner({
-  testFunctionArgumentNames: function() {
-    this.assertEnumEqual([], (function() {}).argumentNames());
-    this.assertEnumEqual(["one"], (function(one) {}).argumentNames());
-    this.assertEnumEqual(["one", "two", "three"], (function(one, two, three) {}).argumentNames());
-    this.assertEnumEqual(["one", "two", "three"], (function(  one  , two
+var arg1 = 1;
+var arg2 = 2;
+var arg3 = 3;
+function TestObj() { };
+TestObj.prototype.assertingEventHandler =
+  function(event, assertEvent, assert1, assert2, assert3, a1, a2, a3) {
+    assertEvent(event);
+    assert1(a1);
+    assert2(a2);
+    assert3(a3);
+  };
+
+var globalBindTest = null;
+
+
+suite("Function Namespace",function(){
+  test("Function.argumentNames()", function() {
+    assertenum([], (function() {}).argumentNames());
+    assertenum(["one"], (function(one) {}).argumentNames());
+    assertenum(["one", "two", "three"], (function(one, two, three) {}).argumentNames());
+    assertenum(["one", "two", "three"], (function(  one  , two
        , three   ) {}).argumentNames());
-    this.assertEqual("$super", (function($super) {}).argumentNames().first());
+    assert.equal("$super", (function($super) {}).argumentNames().first());
 
     function named1() {};
-    this.assertEnumEqual([], named1.argumentNames());
+    assertenum([], named1.argumentNames());
     function named2(one) {};
-    this.assertEnumEqual(["one"], named2.argumentNames());
+    assertenum(["one"], named2.argumentNames());
     function named3(one, two, three) {};
-    this.assertEnumEqual(["one", "two", "three"], named3.argumentNames());
+    assertenum(["one", "two", "three"], named3.argumentNames());
     function named4(one,
       two,
 
       three) {}
-    this.assertEnumEqual($w('one two three'), named4.argumentNames());
+    assertenum($w('one two three'), named4.argumentNames());
     function named5(/*foo*/ foo, /* bar */ bar, /*****/ baz) {}
-    this.assertEnumEqual($w("foo bar baz"), named5.argumentNames());
+    assertenum($w("foo bar baz"), named5.argumentNames());
     function named6(
       /*foo*/ foo,
       /**/bar,
       /* baz */ /* baz */ baz,
       // Skip a line just to screw with the regex...
       /* thud */ thud) {}
-    this.assertEnumEqual($w("foo bar baz thud"), named6.argumentNames());
-  },
+    assertenum($w("foo bar baz thud"), named6.argumentNames());
+  });
 
-  testFunctionBind: function() {
+  test("Function.bind", function() {
     function methodWithoutArguments() { return this.hi; }
     function methodWithArguments()    { return this.hi + ',' + $A(arguments).join(','); }
     function methodReturningContext() { return this; }
@@ -39,18 +54,18 @@ new Test.Unit.Runner({
     // We used to test that `bind` without a `context` argument simply
     // returns the original function, but this contradicts the ES5 spec.
 
-    this.assertNotIdentical(func, func.bind(null));
+    assert.notStrictEqual(func, func.bind(null));
 
-    this.assertEqual('without', methodWithoutArguments.bind({ hi: 'without' })());
-    this.assertEqual('with,arg1,arg2', methodWithArguments.bind({ hi: 'with' })('arg1','arg2'));
-    this.assertEqual('withBindArgs,arg1,arg2',
+    assert.equal('without', methodWithoutArguments.bind({ hi: 'without' })());
+    assert.equal('with,arg1,arg2', methodWithArguments.bind({ hi: 'with' })('arg1','arg2'));
+    assert.equal('withBindArgs,arg1,arg2',
       methodWithArguments.bind({ hi: 'withBindArgs' }, 'arg1', 'arg2')());
-    this.assertEqual('withBindArgsAndArgs,arg1,arg2,arg3,arg4',
+    assert.equal('withBindArgsAndArgs,arg1,arg2,arg3,arg4',
       methodWithArguments.bind({ hi: 'withBindArgsAndArgs' }, 'arg1', 'arg2')('arg3', 'arg4'));
 
-    this.assertEqual(window, methodReturningContext.bind(null)(), 'null has window as its context');
-    this.assertEqual(window, methodReturningContext.bind(u)(), 'undefined has window as its context');
-    this.assertEqual('', methodReturningContext.bind('')(), 'other falsy values should not have window as their context');
+    assert.equal(window, methodReturningContext.bind(null)(), 'null has window as its context');
+    assert.equal(window, methodReturningContext.bind(u)(), 'undefined has window as its context');
+    assert.equal('', methodReturningContext.bind('')(), 'other falsy values should not have window as their context');
       
     
     // Ensure that bound functions ignore their `context` when used as
@@ -74,42 +89,43 @@ new Test.Unit.Runner({
     var axisPoint = new YAxisPoint(5);
     axisPoint.toString(); //  "0,5"
     
-    this.assertEqual("0,5", axisPoint.toString(),
+    assert.equal("0,5", axisPoint.toString(),
      "bound constructor should ignore context and curry properly");
     
-    this.assert(axisPoint instanceof Point,
+    assert(axisPoint instanceof Point,
      "should be an instance of Point");
-    this.assert(axisPoint instanceof YAxisPoint,
+    assert(axisPoint instanceof YAxisPoint,
      "should be an instance of YAxisPoint");
-  },
+  });
 
-  testFunctionCurry: function() {
+  test("Function.curry()", function() {
     var split = function(delimiter, string) { return string.split(delimiter); };
     var splitOnColons = split.curry(":");
-    this.assertNotIdentical(split, splitOnColons);
-    this.assertEnumEqual(split(":", "0:1:2:3:4:5"), splitOnColons("0:1:2:3:4:5"));
-    this.assertIdentical(split, split.curry());
-  },
+    assert.notStrictEqual(split, splitOnColons);
+    assertenum(split(":", "0:1:2:3:4:5"), splitOnColons("0:1:2:3:4:5"));
+    assert.strictEqual(split, split.curry());
+  });
 
-  testFunctionDelay: function() {
+  test("Function.delay()", function(done) {
     window.delayed = undefined;
     var delayedFunction = function() { window.delayed = true; };
     var delayedFunctionWithArgs = function() { window.delayedWithArgs = $A(arguments).join(' '); };
     delayedFunction.delay(0.8);
     delayedFunctionWithArgs.delay(0.8, 'hello', 'world');
-    this.assertUndefined(window.delayed);
-    this.wait(1000, function() {
-      this.assert(window.delayed);
-      this.assertEqual('hello world', window.delayedWithArgs);
-    });
-  },
+    assert.isUndefined(window.delayed);
+    setTimeout(function() {
+      assert(window.delayed);
+      assert.equal('hello world', window.delayedWithArgs);
+      done();
+    },1000);
+  });
 
-  testFunctionWrap: function() {
+  test("Function.wrap()", function() {
     function sayHello(){
       return 'hello world';
     };
 
-    this.assertEqual('HELLO WORLD', sayHello.wrap(function(proceed) {
+    assert.equal('HELLO WORLD', sayHello.wrap(function(proceed) {
       return proceed().toUpperCase();
     })());
 
@@ -120,25 +136,25 @@ new Test.Unit.Runner({
       }).join(' ');
       return proceed();
     });
-    this.assertEqual('Hello world', 'hello world'.capitalize());
-    this.assertEqual('Hello World', 'hello world'.capitalize(true));
-    this.assertEqual('Hello', 'hello'.capitalize());
+    assert.equal('Hello world', 'hello world'.capitalize());
+    assert.equal('Hello World', 'hello world'.capitalize(true));
+    assert.equal('Hello', 'hello'.capitalize());
     String.prototype.capitalize = temp;
-  },
+  });
 
-  testFunctionDefer: function() {
+  test("Function.defer()", function(done) {
     window.deferred = undefined;
     var deferredFunction = function() { window.deferred = true; };
     deferredFunction.defer();
-    this.assertUndefined(window.deferred);
-    this.wait(50, function() {
-      this.assert(window.deferred);
+    assert.isUndefined(window.deferred);
+    setTimeout(function() {
+      assert(window.deferred);
 
       window.deferredValue = 0;
       var deferredFunction2 = function(arg) { window.deferredValue = arg; };
       deferredFunction2.defer('test');
-      this.wait(50, function() {
-        this.assertEqual('test', window.deferredValue);
+      setTimeout(function() {
+        assert.equal('test', window.deferredValue);
         
         window.deferBoundProperly = false;
     
@@ -149,8 +165,8 @@ new Test.Unit.Runner({
     
         func.bind(obj).defer();
     
-        this.wait(50, function() {
-          this.assert(window.deferBoundProperly,
+        setTimeout(function() {
+          assert(window.deferBoundProperly,
            "deferred bound functions should preserve original scope");
            
           window.deferBoundProperlyOnString = false;
@@ -158,28 +174,29 @@ new Test.Unit.Runner({
           
           str.evalScripts.bind(str).defer();
           
-          this.wait(50, function() {
-            this.assert(window.deferBoundProperlyOnString);
-          });
+          setTimeout(function() {
+            assert(window.deferBoundProperlyOnString);
+            done()
+          },50);
           
-        });
+        },50);
         
-      });
-    });
+      },50);
+    },50);
     
 
-  },
+  });
 
-  testFunctionMethodize: function() {
+  test("Function.methodize()", function() {
     var Foo = { bar: function(baz) { return baz } };
     var baz = { quux: Foo.bar.methodize() };
 
-    this.assertEqual(Foo.bar.methodize(), baz.quux);
-    this.assertEqual(baz, Foo.bar(baz));
-    this.assertEqual(baz, baz.quux());
-  },
+    assert.equal(Foo.bar.methodize(), baz.quux);
+    assert.equal(baz, Foo.bar(baz));
+    assert.equal(baz, baz.quux());
+  });
 
-  testBindAsEventListener: function() {
+  test("Function.bindAsEventListener()", function() {
     for( var i = 0; i < 10; ++i ){
       var div = document.createElement('div');
       div.setAttribute('id','test-'+i);
@@ -187,11 +204,11 @@ new Test.Unit.Runner({
       var tobj = new TestObj();
       var eventTest = { test: true };
       var call = tobj.assertingEventHandler.bindAsEventListener(tobj,
-        this.assertEqual.bind(this, eventTest),
-        this.assertEqual.bind(this, arg1),
-        this.assertEqual.bind(this, arg2),
-        this.assertEqual.bind(this, arg3), arg1, arg2, arg3 );
+        assert.equal.bind(this, eventTest),
+        assert.equal.bind(this, arg1),
+        assert.equal.bind(this, arg2),
+        assert.equal.bind(this, arg3), arg1, arg2, arg3 );
       call(eventTest);
     }
-  }
+  });
 });
