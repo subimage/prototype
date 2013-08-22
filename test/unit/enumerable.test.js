@@ -1,4 +1,4 @@
-var Fixtures = {
+var EnumFixtures = {
   People: [
     {name: 'Sam Stephenson',    nickname: 'sam-'},
     {name: 'Marcel Molina Jr.', nickname: 'noradio'},
@@ -20,7 +20,7 @@ var Fixtures = {
 };
 
 for (var i = 1; i <= 100; i++)
-  Fixtures.Z.push(i);
+  EnumFixtures.Z.push(i);
 
 function prime(value) {
   for (var i = 2; i < value; i++)
@@ -31,7 +31,7 @@ function prime(value) {
 suite("Enumerable Namespace",function(){
   test(".each() Break", function() {
     var result = 0;
-    Fixtures.Basic.each(function(value) {
+    EnumFixtures.Basic.each(function(value) {
       if ((result = value) == 2) throw $break;
     });
     
@@ -40,7 +40,7 @@ suite("Enumerable Namespace",function(){
   
   test(".each() return Acts As Continue",function() {
     var results = [];
-    Fixtures.Basic.each(function(value) {
+    EnumFixtures.Basic.each(function(value) {
     if (value == 2) return;
       results.push(value);
     });
@@ -50,34 +50,34 @@ suite("Enumerable Namespace",function(){
   
   test(".each() passes value, index and collection to the iterator",function() {
     var i = 0;
-    Fixtures.Basic.each(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.each(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
     });
   });
   
   test(".each() Chaining",function() {
-    assert(Fixtures.Primes === Fixtures.Primes.each(Prototype.emptyFunction));
-    assert(3 === Fixtures.Basic.each(Prototype.emptyFunction).length);
+    assert(EnumFixtures.Primes === EnumFixtures.Primes.each(Prototype.emptyFunction));
+    assert(3 === EnumFixtures.Basic.each(Prototype.emptyFunction).length);
   });
 
   test("EnumContext",function() {
     var results = [];
-    Fixtures.Basic.each(function(value) {
+    EnumFixtures.Basic.each(function(value) {
       results.push(value * this.i);
     }, { i: 2 });
     
     assert('2 4 6' === results.join(' '));
 
-    assert(Fixtures.Basic.all(function(value){
+    assert(EnumFixtures.Basic.all(function(value){
       return value >= this.min && value <= this.max;
     }, { min: 1, max: 3 }));
-    assert(!Fixtures.Basic.all(function(value){
+    assert(!EnumFixtures.Basic.all(function(value){
       return value >= this.min && value <= this.max;
     }));
-    assert(Fixtures.Basic.any(function(value){
+    assert(EnumFixtures.Basic.any(function(value){
       return value == this.target_value;
     }, { target_value: 2 }));
   });
@@ -89,20 +89,20 @@ suite("Enumerable Namespace",function(){
     assert([true, false, false].any());
     assert(![false, false, false].any());
     
-    assert(Fixtures.Basic.any(function(value) {
+    assert(EnumFixtures.Basic.any(function(value) {
       return value > 2;
     }));
-    assert(!Fixtures.Basic.any(function(value) {
+    assert(!EnumFixtures.Basic.any(function(value) {
       return value > 5;
     }));
   });
   
   test(".any() passes value, index and collection to the iterator", function() {
     var i = 0;
-    Fixtures.Basic.any(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.any(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
       
       // Iterate over all values
@@ -117,20 +117,20 @@ suite("Enumerable Namespace",function(){
     assert(![true, false, false].all());
     assert(![false, false, false].all());
 
-    assert(Fixtures.Basic.all(function(value) {
+    assert(EnumFixtures.Basic.all(function(value) {
       return value > 0;
     }));
-    assert(!Fixtures.Basic.all(function(value) {
+    assert(!EnumFixtures.Basic.all(function(value) {
       return value > 1;
     }));
   });
   
   test(".all() passes value, index and collection to the iterator", function() {
     var i = 0;
-    Fixtures.Basic.all(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.all(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
       
       // Iterate over all values
@@ -139,20 +139,20 @@ suite("Enumerable Namespace",function(){
   });
   
   test(".collect() method",function() {
-    assert(Fixtures.Nicknames.join(', ') === 
-      Fixtures.People.collect(function(person) {
+    assert(EnumFixtures.Nicknames.join(', ') === 
+      EnumFixtures.People.collect(function(person) {
         return person.nickname;
       }).join(", "));
     
-    assert(26 === Fixtures.Primes.map().length);
+    assert(26 === EnumFixtures.Primes.map().length);
   });
   
   test(".collect() passes value, index and collection to the iterator", function() {
     var i = 0;
-    Fixtures.Basic.collect(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.collect(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
       return value;
     });
@@ -160,17 +160,17 @@ suite("Enumerable Namespace",function(){
   
   test(".detect() method",function() {
     assert('Marcel Molina Jr.' ===
-      Fixtures.People.detect(function(person) {
+      EnumFixtures.People.detect(function(person) {
         return person.nickname.match(/no/);
       }).name);
   });
   
   test(".detect() passes value, index and collection to the iterator", function() {
     var i = 0;
-    Fixtures.Basic.detect(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.detect(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
       
       // Iterate over all values
@@ -182,49 +182,49 @@ suite("Enumerable Namespace",function(){
     assert.deepEqual([], [].eachSlice(2));
     assert(1 === [1].eachSlice(1).length);
     assert.deepEqual([1], [1].eachSlice(1)[0]);
-    assert(2 === Fixtures.Basic.eachSlice(2).length);
+    assert(2 === EnumFixtures.Basic.eachSlice(2).length);
     assert.deepEqual(
       [3, 2, 1, 11, 7, 5, 19, 17, 13, 31, 29, 23, 43, 41, 37, 59, 53, 47, 71, 67, 61, 83, 79, 73, 97, 89],
-      Fixtures.Primes.eachSlice( 3, function(slice){ return slice.reverse() }).flatten()
+      EnumFixtures.Primes.eachSlice( 3, function(slice){ return slice.reverse() }).flatten()
     );
-    assert.deepEqual(Fixtures.Basic, Fixtures.Basic.eachSlice(-10));
-    assert.deepEqual(Fixtures.Basic, Fixtures.Basic.eachSlice(0));
-    assert(Fixtures.Basic !== Fixtures.Basic.eachSlice(0));
+    assert.deepEqual(EnumFixtures.Basic, EnumFixtures.Basic.eachSlice(-10));
+    assert.deepEqual(EnumFixtures.Basic, EnumFixtures.Basic.eachSlice(0));
+    assert(EnumFixtures.Basic !== EnumFixtures.Basic.eachSlice(0));
   });
   
   test(".each() With Index",function() {
     var nicknames = [], indexes = [];
-    Fixtures.People.each(function(person, index) {
+    EnumFixtures.People.each(function(person, index) {
       nicknames.push(person.nickname);
       indexes.push(index);
     });
     
-    assert(Fixtures.Nicknames.join(', ') === 
+    assert(EnumFixtures.Nicknames.join(', ') === 
       nicknames.join(', '));
     assert('0, 1, 2, 3' === indexes.join(', '));
   });
   
   test(".findAll() method",function() {
-    assert(Fixtures.Primes.join(', ') === 
-      Fixtures.Z.findAll(prime).join(', '));
+    assert(EnumFixtures.Primes.join(', ') === 
+      EnumFixtures.Z.findAll(prime).join(', '));
   });
   
   test(".findAll() passes value, index and collection to the iterator",function() {
     var i = 0;
-    Fixtures.Basic.findAll(function(value, index, collection) {
-      assert(Fixtures.Basic[i] === value);
+    EnumFixtures.Basic.findAll(function(value, index, collection) {
+      assert(EnumFixtures.Basic[i] === value);
       assert(i === index);
-      assert(Fixtures.Basic === collection);
+      assert(EnumFixtures.Basic === collection);
       i++;
       return value > 5;
     });
   });
   
   test(".grep()",function() {
-    assert('noradio, htonl' === Fixtures.Nicknames.grep(/o/).join(", "));
+    assert('noradio, htonl' === EnumFixtures.Nicknames.grep(/o/).join(", "));
       
     assert('NORADIO, HTONL' ===
-      Fixtures.Nicknames.grep(/o/, function(nickname) {
+      EnumFixtures.Nicknames.grep(/o/, function(nickname) {
         return nickname.toUpperCase();
       }).join(", "))
 
@@ -242,202 +242,202 @@ suite("Enumerable Namespace",function(){
   
   test(".grep() passes value, index and collection to the iterator", function() {
     var i = 0;
-    Fixtures.Basic.grep(/\d/, function(value, index, collection) {
-      assert.strictEqual(value,Fixtures.Basic[i]);
+    EnumFixtures.Basic.grep(/\d/, function(value, index, collection) {
+      assert.strictEqual(value,EnumFixtures.Basic[i]);
       assert.strictEqual(index, i);
-      assert.strictEqual(collection,Fixtures.Basic);
+      assert.strictEqual(collection,EnumFixtures.Basic);
       i++;
       return value;
     }, this);
   });
   
-  // testInclude: function() {
-  //   this.assert(Fixtures.Nicknames.include('sam-'));
-  //   this.assert(Fixtures.Nicknames.include('noradio'));
-  //   this.assert(!Fixtures.Nicknames.include('gmosx'));
-  //   this.assert(Fixtures.Basic.include(2));
-  //   this.assert(Fixtures.Basic.include('2'));
-  //   this.assert(!Fixtures.Basic.include('4'));
-  // },
+  test(".include()", function() {
+    assert(EnumFixtures.Nicknames.include('sam-'));
+    assert(EnumFixtures.Nicknames.include('noradio'));
+    assert(!EnumFixtures.Nicknames.include('gmosx'));
+    assert(EnumFixtures.Basic.include(2));
+    assert(EnumFixtures.Basic.include('2'));
+    assert(!EnumFixtures.Basic.include('4'));
+  });
   
-  // testInGroupsOf: function() {
-  //   this.assertEnumEqual([], [].inGroupsOf(3));
+  test(".inGroupsOf()", function() {
+    assertenum([], [].inGroupsOf(3));
     
-  //   var arr = [1, 2, 3, 4, 5, 6].inGroupsOf(3);
-  //   this.assertEqual(2, arr.length);
-  //   this.assertEnumEqual([1, 2, 3], arr[0]);
-  //   this.assertEnumEqual([4, 5, 6], arr[1]);
+    var arr = [1, 2, 3, 4, 5, 6].inGroupsOf(3);
+    assert.equal(2, arr.length);
+    assertenum([1, 2, 3], arr[0]);
+    assertenum([4, 5, 6], arr[1]);
     
-  //   arr = [1, 2, 3, 4, 5, 6].inGroupsOf(4);
-  //   this.assertEqual(2, arr.length);
-  //   this.assertEnumEqual([1, 2, 3, 4], arr[0]);
-  //   this.assertEnumEqual([5, 6, null, null], arr[1]);
+    arr = [1, 2, 3, 4, 5, 6].inGroupsOf(4);
+    assert.equal(2, arr.length);
+    assertenum([1, 2, 3, 4], arr[0]);
+    assertenum([5, 6, null, null], arr[1]);
     
-  //   var basic = Fixtures.Basic
+    var basic = EnumFixtures.Basic
     
-  //   arr = basic.inGroupsOf(4,'x');
-  //   this.assertEqual(1, arr.length);
-  //   this.assertEnumEqual([1, 2, 3, 'x'], arr[0]);
+    arr = basic.inGroupsOf(4,'x');
+    assert.equal(1, arr.length);
+    assertenum([1, 2, 3, 'x'], arr[0]);
     
-  //   this.assertEnumEqual([1,2,3,'a'], basic.inGroupsOf(2, 'a').flatten());
+    assertenum([1,2,3,'a'], basic.inGroupsOf(2, 'a').flatten());
 
-  //   arr = basic.inGroupsOf(5, '');
-  //   this.assertEqual(1, arr.length);
-  //   this.assertEnumEqual([1, 2, 3, '', ''], arr[0]);
+    arr = basic.inGroupsOf(5, '');
+    assert.equal(1, arr.length);
+    assertenum([1, 2, 3, '', ''], arr[0]);
 
-  //   this.assertEnumEqual([1,2,3,0], basic.inGroupsOf(2, 0).flatten());
-  //   this.assertEnumEqual([1,2,3,false], basic.inGroupsOf(2, false).flatten());
-  // },
+    assertenum([1,2,3,0], basic.inGroupsOf(2, 0).flatten());
+    assertenum([1,2,3,false], basic.inGroupsOf(2, false).flatten());
+  });
   
-  // testInject: function() {
-  //   this.assertEqual(1061, 
-  //     Fixtures.Primes.inject(0, function(sum, value) {
-  //       return sum + value;
-  //     }));
-  // },
+  test(".inject()", function() {
+    assert.equal(1061, 
+      EnumFixtures.Primes.inject(0, function(sum, value) {
+        return sum + value;
+      }));
+  });
   
-  // "test #inject passes memo, value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.inject(0, function(memo, value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
+  test(".inject() passes memo, value, index and collection to the iterator",function() {
+    var i = 0;
+    EnumFixtures.Basic.inject(0, function(memo, value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
 
-  //     return memo + value;
-  //   }, this);
-  // },
+      return memo + value;
+    });
+  });
   
-  // testInvoke: function() {
-  //   var result = [[2, 1, 3], [6, 5, 4]].invoke('sort');
-  //   this.assertEqual(2, result.length);
-  //   this.assertEqual('1, 2, 3', result[0].join(', '));
-  //   this.assertEqual('4, 5, 6', result[1].join(', '));
+  test(".invoke()", function() {
+    var result = [[2, 1, 3], [6, 5, 4]].invoke('sort');
+    assert.equal(2, result.length);
+    assert.equal('1, 2, 3', result[0].join(', '));
+    assert.equal('4, 5, 6', result[1].join(', '));
     
-  //   result = result.invoke('invoke', 'toString', 2);
-  //   this.assertEqual('1, 10, 11', result[0].join(', '));
-  //   this.assertEqual('100, 101, 110', result[1].join(', '));
-  // },
+    result = result.invoke('invoke', 'toString', 2);
+    assert.equal('1, 10, 11', result[0].join(', '));
+    assert.equal('100, 101, 110', result[1].join(', '));
+  });
   
-  // testMax: function() {
-  //   this.assertEqual(100, Fixtures.Z.max());
-  //   this.assertEqual(97, Fixtures.Primes.max());
-  //   this.assertEqual(2, [ -9, -8, -7, -6, -4, -3, -2,  0, -1,  2 ].max());
-  //   this.assertEqual('sam-', Fixtures.Nicknames.max()); // ?s > ?U
-  // },
+  test(".max()", function() {
+    assert.equal(100, EnumFixtures.Z.max());
+    assert.equal(97, EnumFixtures.Primes.max());
+    assert.equal(2, [ -9, -8, -7, -6, -4, -3, -2,  0, -1,  2 ].max());
+    assert.equal('sam-', EnumFixtures.Nicknames.max()); // ?s > ?U
+  });
   
-  // "test #max passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.max(function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value;
-  //   }, this);
-  // },
+  test(".max() passes value, index and collection to the iterator", function() {
+    var i = 0;
+    EnumFixtures.Basic.max(function(value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
+      return value;
+    });
+  });
   
-  // testMin: function() {
-  //   this.assertEqual(1, Fixtures.Z.min());
-  //   this.assertEqual(0, [  1, 2, 3, 4, 5, 6, 7, 8, 0, 9 ].min());
-  //   this.assertEqual('Ulysses', Fixtures.Nicknames.min()); // ?U < ?h
-  // },
+  test(".min()", function() {
+    assert.equal(1, EnumFixtures.Z.min());
+    assert.equal(0, [  1, 2, 3, 4, 5, 6, 7, 8, 0, 9 ].min());
+    assert.equal('Ulysses', EnumFixtures.Nicknames.min()); // ?U < ?h
+  });
   
-  // "test #min passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.min(function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value;
-  //   }, this);
-  // },
+  test(".min() passes value, index and collection to the iterator",function() {
+    var i = 0;
+    EnumFixtures.Basic.min(function(value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
+      return value;
+    });
+  });
   
-  // testPartition: function() {
-  //   var result = Fixtures.People.partition(function(person) {
-  //     return person.name.length < 15;
-  //   }).invoke('pluck', 'nickname');
+  test(".partition()", function() {
+    var result = EnumFixtures.People.partition(function(person) {
+      return person.name.length < 15;
+    }).invoke('pluck', 'nickname');
     
-  //   this.assertEqual(2, result.length);
-  //   this.assertEqual('sam-, htonl', result[0].join(', '));
-  //   this.assertEqual('noradio, Ulysses', result[1].join(', '));
-  // },
+    assert.equal(2, result.length);
+    assert.equal('sam-, htonl', result[0].join(', '));
+    assert.equal('noradio, Ulysses', result[1].join(', '));
+  });
   
-  // "test #partition passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.partition(function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value < 2;
-  //   }, this);
-  // },
+  test(".partition() passes value, index and collection to the iterator", function() {
+    var i = 0;
+    EnumFixtures.Basic.partition(function(value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
+      return value < 2;
+    });
+  });
   
-  // testPluck: function() {
-  //   this.assertEqual(Fixtures.Nicknames.join(', '),
-  //     Fixtures.People.pluck('nickname').join(', '));
-  // },
+  test(".pluck()", function() {
+    assert.equal(EnumFixtures.Nicknames.join(', '),
+      EnumFixtures.People.pluck('nickname').join(', '));
+  });
   
-  // testReject: function() {
-  //   this.assertEqual(0, 
-  //     Fixtures.Nicknames.reject(Prototype.K).length);
+  test(".reject()", function() {
+    assert.equal(0, 
+      EnumFixtures.Nicknames.reject(Prototype.K).length);
       
-  //   this.assertEqual('sam-, noradio, htonl',
-  //     Fixtures.Nicknames.reject(function(nickname) {
-  //       return nickname != nickname.toLowerCase();
-  //     }).join(', '));
-  // },
+    assert.equal('sam-, noradio, htonl',
+      EnumFixtures.Nicknames.reject(function(nickname) {
+        return nickname != nickname.toLowerCase();
+      }).join(', '));
+  });
   
-  // "test #reject passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.reject(function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value < 2;
-  //   }, this);
-  // },
+  test(".reject() passes value, index and collection to the iterator", function() {
+    var i = 0;
+    EnumFixtures.Basic.reject(function(value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
+      return value < 2;
+    });
+  });
   
-  // testSortBy: function() {
-  //   this.assertEqual('htonl, noradio, sam-, Ulysses',
-  //     Fixtures.People.sortBy(function(value) {
-  //       return value.nickname.toLowerCase();
-  //     }).pluck('nickname').join(', '));
-  // },
+  test(".sortBy()", function() {
+    assert.equal('htonl, noradio, sam-, Ulysses',
+      EnumFixtures.People.sortBy(function(value) {
+        return value.nickname.toLowerCase();
+      }).pluck('nickname').join(', '));
+  });
   
-  // "test #sortBy passes value, index and collection to the iterator": function() {
-  //   var i = 0;
-  //   Fixtures.Basic.sortBy(function(value, index, collection) {
-  //     this.assertIdentical(Fixtures.Basic[i], value);
-  //     this.assertIdentical(i, index);
-  //     this.assertIdentical(Fixtures.Basic, collection);
-  //     i++;
-  //     return value;
-  //   }, this);
-  // },
+  test(".sortBy() passes value, index and collection to the iterator",function() {
+    var i = 0;
+    EnumFixtures.Basic.sortBy(function(value, index, collection) {
+      assert.strictEqual(EnumFixtures.Basic[i], value);
+      assert.strictEqual(i, index);
+      assert.strictEqual(EnumFixtures.Basic, collection);
+      i++;
+      return value;
+    });
+  });
   
-  // testToArray: function() {
-  //   var result = Fixtures.People.toArray();
-  //   this.assert(result != Fixtures.People); // they're different objects...
-  //   this.assertEqual(Fixtures.Nicknames.join(', '),
-  //     result.pluck('nickname').join(', ')); // but the values are the same
-  // },
+  test(".toArray()", function() {
+    var result = EnumFixtures.People.toArray();
+    assert(result != EnumFixtures.People); // they're different objects...
+    assert.equal(EnumFixtures.Nicknames.join(', '),
+      result.pluck('nickname').join(', ')); // but the values are the same
+  });
   
-  // testZip: function() {
-  //   var result = [1, 2, 3].zip([4, 5, 6], [7, 8, 9]);
-  //   this.assertEqual('[[1, 4, 7], [2, 5, 8], [3, 6, 9]]', result.inspect());
+  test(".zip()", function() {
+    var result = [1, 2, 3].zip([4, 5, 6], [7, 8, 9]);
+    assert.equal('[[1, 4, 7], [2, 5, 8], [3, 6, 9]]', result.inspect());
     
-  //   result = [1, 2, 3].zip([4, 5, 6], [7, 8, 9], function(array) { return array.reverse() });
-  //   this.assertEqual('[[7, 4, 1], [8, 5, 2], [9, 6, 3]]', result.inspect());
-  // },
+    result = [1, 2, 3].zip([4, 5, 6], [7, 8, 9], function(array) { return array.reverse() });
+    assert.equal('[[7, 4, 1], [8, 5, 2], [9, 6, 3]]', result.inspect());
+  });
   
-  // testSize: function() {
-  //   this.assertEqual(4, Fixtures.People.size());
-  //   this.assertEqual(4, Fixtures.Nicknames.size());
-  //   this.assertEqual(26, Fixtures.Primes.size());
-  //   this.assertEqual(0, [].size());
-  // }
+  test(".size()", function() {
+    assert.equal(4, EnumFixtures.People.size());
+    assert.equal(4, EnumFixtures.Nicknames.size());
+    assert.equal(26, EnumFixtures.Primes.size());
+    assert.equal(0, [].size());
+  });
 });
