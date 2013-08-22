@@ -1,5 +1,5 @@
-new Test.Unit.Runner({
-  testBrowserDetection: function() {
+suite("Prototype Namespace",function(){
+  test("Browser Detection", function() {
     var results = $H(Prototype.Browser).map(function(engine){
       return engine;
     }).partition(function(engine){
@@ -7,37 +7,37 @@ new Test.Unit.Runner({
     });
     var trues = results[0], falses = results[1];
 
-    this.info('User agent string is: ' + navigator.userAgent);
+    info('User agent string is: ' + navigator.userAgent);
 
-    this.assert(trues.size() == 0 || trues.size() == 1,
+    assert(trues.size() == 0 || trues.size() == 1,
       'There should be only one or no browser detected.');
 
     // we should have definite trues or falses here
     trues.each(function(result) {
-      this.assert(result[1] === true);
+      assert(result[1] === true);
     }, this);
     falses.each(function(result) {
-      this.assert(result[1] === false);
+      assert(result[1] === false);
     }, this);
 
     if(navigator.userAgent.indexOf('AppleWebKit/') > -1) {
-      this.info('Running on WebKit');
-      this.assert(Prototype.Browser.WebKit);
+      info('Running on WebKit');
+      assert(Prototype.Browser.WebKit);
     }
 
     if(!!window.opera) {
-      this.info('Running on Opera');
-      this.assert(Prototype.Browser.Opera);
+      info('Running on Opera');
+      assert(Prototype.Browser.Opera);
     }
 
     if(!!(window.attachEvent && !window.opera)) {
-      this.info('Running on IE');
-      this.assert(Prototype.Browser.IE);
+      info('Running on IE');
+      assert(Prototype.Browser.IE);
     }
 
     if(navigator.userAgent.indexOf('Gecko') > -1 && navigator.userAgent.indexOf('KHTML') == -1) {
-      this.info('Running on Gecko');
-      this.assert(Prototype.Browser.Gecko);
+      info('Running on Gecko');
+      assert(Prototype.Browser.Gecko);
     }
-  }
+  });
 });
