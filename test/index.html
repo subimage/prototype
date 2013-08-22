@@ -8,6 +8,10 @@
 	<ul>
 		<li>Base Tests</li>
 		<li><a href="domtests.html">DOM Interaction Tests</a></li>
+	    <li><a href="http://localhost:1337/test/ajaxtests.html">AJAX Interaction Tests (requires webserver)</a></li>
+	    <li><a href="http://localhost:1337/test/formtests.html">Form Interaction Tests (requires webserver)</a></li>
+	    <li><a href="selectortests.html">Selector Interaction Tests</a></li>
+	    <li><a href="layouttests.html">Layout Tests</a></li>
 	</ul>
 	<div id="mocha"></div>
 	<script src="mocha.js"></script>
@@ -36,13 +40,91 @@
 		function info(msg){
 			console.log(msg)
 		}
+		function fail(message) {
+			var messages = [];
+			var line = "";
+			try {
+				throw new Error("stack");
+			} catch(e){
+				line = (/\.html:(\d+)/.exec(e.stack || '') || ['',''])[1];
+			}
+			messages.push("Failure: " + message + (line ? " Line #" + line : ""));
+		}		
+	    function assertPairEqual(pair) {
+	      return pair.all(Object.isArray) ?
+	        pair[0].zip(pair[1]).all(assertPairEqual) : pair[0] == pair[1];
+	    }
+	    function assertHashEqual(expected, actual, message) {
+	      expected = $H(expected);
+	      actual = $H(actual);
+	      var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
+	      // from now we recursively zip & compare nested arrays
+	      function block() {
+	        return expected_array.length == actual_array.length && 
+	          expected_array.zip(actual_array).all(assertPairEqual);
+	      }
+	      try{
+	        assert(block())
+	      } catch (e){
+	        assert(false)
+	      }
+	    }
+	    function assertHashNotEqual(expected, actual, message) {
+	      expected = $H(expected);
+	      actual = $H(actual);
+	      var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
+	      // from now we recursively zip & compare nested arrays
+	      function block() {
+	        return !(expected_array.length == actual_array.length && 
+	          expected_array.zip(actual_array).all(assertPairEqual));
+	      }
+	      try{
+	        assert(block())
+	      } catch (e){
+	        assert(false)
+	      }
+	    }
+		function benchmark(operation, iterations) {
+			var startAt = new Date();
+			(iterations || 1).times(operation);
+			var timeTaken = ((new Date())-startAt);
+			info((arguments[2] || 'Operation') + ' finished ' + 
+			iterations + ' iterations in ' + (timeTaken/1000)+'s' );
+			return timeTaken;
+		}
+		function assertElementsMatch() {
+		  var expressions = $A(arguments), elements = $A(expressions.shift());
+		  if (elements.length != expressions.length) {
+		    throw new Error('assertElementsMatch: size mismatch: ' + elements.length + ' elements, ' + expressions.length + ' expressions');
+		    return false;
+		  }
+		  elements.zip(expressions).all(function(pair, index) {
+		    var element = $(pair.first()), expression = pair.last();
+		    if (element.match(expression)) return true;
+		    throw new Error('assertElementsMatch: (in index ' + index + ') expected ' + expression.inspect() + ' but got ' + element.inspect());
+		  });
+		}
+
 	</script>
-	<script src="unit/base.test.js"></script>
 	<script src="unit/array.test.js"></script>
+	<script src="unit/base.test.js"></script>
 	<script src="unit/class.test.js"></script>
 	<script src="unit/date.test.js"></script>
-	<script src="unit/enumerable.test.js"></script>
 	<script src="unit/element_mixins.test.js"></script>
+	<script src="unit/enumerable.test.js"></script>
+	<script src="unit/event.test.js"></script>
+	<script src="unit/event_handler.test.js"></script>
+	<script src="unit/function.test.js"></script>
+	<script src="unit/hash.test.js"></script>
+	<script src="unit/number.test.js"></script>
+	<script src="unit/object.test.js"></script>
+	<script src="unit/periodical_executer.test.js"></script>
+	<script src="unit/position.test.js"></script>
+	<script src="unit/prototype.test.js"></script>
+	<script src="unit/range.test.js"></script>
+	<script src="unit/regexp.test.js"></script>
+	<script src="unit/string.test.js"></script>
+	<script src="unit/selector_engine.test.js"></script>
 	<script>
 		if (window.mochaPhantomJS)
 		{
@@ -60,6 +142,39 @@
 	  <input type="text" id="input" value="4" />
 	  <input type="submit" />
 	</form>
+	<div id="test"></div>
+	<ul id="list">
+	  <li></li>
+	  <li></li>
+	  <li></li>
+	</ul>
+	<div id="container" style="display: none">
+	  <p>Here's <a href="#"><span>a link</span></a>.</p>
+	  <p>And here's another paragraph.</p>
+	</div>
+	
+	<div id="outer" style="display: none">
+	  <p id="inner">One two three <span id="span">four</span></p>
+	</div>
+	<div id="eventcontainer"><div></div></div>
+<div id="test_div_parent" class="test_class">
+  <div id="test_div_child" class="test_class">
+  </div>
+</div>
+<script type="text/javascript" charset="utf-8">
+  eventResults.endOfDocument = true;
+</script>
+
+<div id="ensure_scrollbars" style="width:10000px; height:10000px; position:absolute" > </div>
+
+<div id="body_absolute" style="position: absolute; top: 10px; left: 10px">
+  <div id="absolute_absolute" style="position: absolute; top: 10px; left:10px"> </div>
+  <div id="absolute_relative" style="position: relative; top: 10px; left:10px">
+    <div style="height:10px;font-size:2px">test<span id="inline">test</span></div>
+    <div id="absolute_relative_undefined"> </div>
+  </div>
+</div>
+
 
 </body>
 </html>
