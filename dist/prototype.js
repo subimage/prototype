@@ -7136,7 +7136,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
 
   function createResponderForCustomEvent(uid, eventName, handler) {
     return function(event) {
-      var element = Event.cache[uid].element;
+      var element = Event.cache[uid] !== undefined ? Event.cache[uid].element : event.target;
 
       if (Object.isUndefined(event.eventName))
         return false;
