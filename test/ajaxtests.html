@@ -1,0 +1,73 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>PrototypeJS AJAX Interaction Tests</title>
+	<link rel="stylesheet" href="mocha.css" />
+</head>
+<body>
+  <ul>
+    <li><a href="index.html">Base Tests</a></li>
+    <li><a href="domtests.html">DOM Interaction Tests</a></li>
+    <li>AJAX Interaction Tests</li>
+    <li><a href="http://localhost:1337/test/formtests.html">Form Interaction Tests (requires webserver)</a></li>
+    <li><a href="selectortests.html">Selector Interaction Tests</a></li>
+    <li><a href="layouttests.html">Layout Tests</a></li>
+  </ul>
+	<div id="mocha"></div>
+	<script src="mocha.js"></script>
+  <script src="chai.js"></script>
+  <script src="/dist/prototype.min.js"></script>
+	<script>mocha.setup('tdd')</script>
+	<script>
+    var assert = chai.assert;
+    function assertenum(varA, varB, msg){
+      if(varA.length !== varB.length) throw new Error(msg || 'failed')
+      Object.keys(varA).each(function(t){
+        if(varA[t] !== varB[t]) throw new Error(msg || 'failed')
+      });
+      return true;
+    }
+		function assertRespondsTo(method, obj, msg) {
+			var message = arguments[2] || 'assertRespondsTo';
+			try {
+				if(!(obj[method] && typeof obj[method] == 'function'))
+				{
+					throw new Error(msg + ": object doesn't respond to [" + method + "]");
+				}
+			}
+			catch(e) { throw new Error(e); }
+		}
+		function info(msg){
+			console.log(msg)
+		}
+    function assertElementsMatch() {
+      var expressions = $A(arguments), elements = $A(expressions.shift());
+      if (elements.length != expressions.length) {
+        throw new Error('assertElementsMatch: size mismatch: ' + elements.length + ' elements, ' + expressions.length + ' expressions');
+        return false;
+      }
+      elements.zip(expressions).all(function(pair, index) {
+        var element = $(pair.first()), expression = pair.last();
+        if (element.match(expression)) return true;
+        throw new Error('assertElementsMatch: (in index ' + index + ') expected ' + expression.inspect() + ' but got ' + element.inspect());
+      });
+    }
+	</script>
+	<script src="unit/ajax.test.js"></script>
+	<script>
+		if (window.mochaPhantomJS)
+		{
+			mochaPhantomJS.run(); 
+		}
+		else
+		{
+			mocha.run();
+		}
+		</script>
+    <div id="testlog"></div>
+
+    <div id="content"></div>
+    <div id="content2" style="color:red"></div>
+    
+</body>
+</html>

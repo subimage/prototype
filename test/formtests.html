@@ -1,0 +1,246 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>PrototypeJS Form Interaction Tests</title>
+	<link rel="stylesheet" href="mocha.css" />
+</head>
+<body>
+  <ul>
+    <li><a href="index.html">Base Tests</a></li>
+    <li><a href="formtests.html">DOM Interaction Tests</a></li>
+    <li><a href="http://localhost:1337/test/ajaxtests.html">AJAX Interaction Tests (requires webserver)</a></li>
+    <li>Form Interaction Tests</li>
+    <li><a href="selectortests.html">Selector Interaction Tests</a></li>
+    <li><a href="layouttests.html">Layout Tests</a></li>
+  </ul>
+	<div id="mocha"></div>
+	<script src="mocha.js"></script>
+  <script src="chai.js"></script>
+  <script src="../dist/prototype.min.js"></script>
+	<script>mocha.setup('tdd')</script>
+	<script>
+    var assert = chai.assert;
+    function assertenum(varA, varB, msg){
+      if(varA.length !== varB.length) throw new Error(msg || 'failed')
+      Object.keys(varA).each(function(t){
+        if(varA[t] !== varB[t]) throw new Error(msg || 'failed')
+      });
+      return true;
+    }
+		function assertRespondsTo(method, obj, msg) {
+			var message = arguments[2] || 'assertRespondsTo';
+			try {
+				if(!(obj[method] && typeof obj[method] == 'function'))
+				{
+					throw new Error(msg + ": object doesn't respond to [" + method + "]");
+				}
+			}
+			catch(e) { throw new Error(e); }
+		}
+    function assertEnabled(){
+      for (var i = 0, element; element = arguments[i]; i++) {
+        assert(!$(element).disabled);
+      }
+    }
+    function assertDisabled(){
+      for (var i = 0, element; element = arguments[i]; i++) {
+        assert($(element).disabled);
+      }
+    }
+    function assertPairEqual(pair) {
+      return pair.all(Object.isArray) ?
+        pair[0].zip(pair[1]).all(assertPairEqual) : pair[0] == pair[1];
+    }
+    function assertHashEqual(expected, actual, message) {
+      expected = $H(expected);
+      actual = $H(actual);
+      var expected_array = expected.toArray().sort(), actual_array = actual.toArray().sort();
+      // from now we recursively zip & compare nested arrays
+      function block() {
+        return expected_array.length == actual_array.length && 
+          expected_array.zip(actual_array).all(assertPairEqual);
+      }
+      try{
+        block()
+      } catch (e){
+        assert(false)
+      }
+    }
+
+		function info(msg){
+			console.log(msg)
+		}
+    function assertElementsMatch() {
+      var expressions = $A(arguments), elements = $A(expressions.shift());
+      if (elements.length != expressions.length) {
+        throw new Error('assertElementsMatch: size mismatch: ' + elements.length + ' elements, ' + expressions.length + ' expressions');
+        return false;
+      }
+      elements.zip(expressions).all(function(pair, index) {
+        var element = $(pair.first()), expression = pair.last();
+        if (element.match(expression)) return true;
+        throw new Error('assertElementsMatch: (in index ' + index + ') expected ' + expression.inspect() + ' but got ' + element.inspect());
+      });
+    }
+	</script>
+	<script src="unit/form.test.js"></script>
+	<script>
+		if (window.mochaPhantomJS)
+		{
+			mochaPhantomJS.run(); 
+		}
+		else
+		{
+			mocha.run();
+		}
+		</script>
+<div id="testlog"></div>
+
+<form id="form" method="get" action="ajaxtest_assets/empty.js">
+  <input type="text" name="val1" id="input_enabled" value="4" />
+  <div>This is not a form element</div>
+  <input type="text" name="val2" id="input_disabled" disabled="disabled" value="5" />
+  <input type="submit" name="first_submit" value="Commit it!" />
+  <input type="submit" name="second_submit" value="Delete it!" />
+  <input type="text" name="action" value="blah" />
+</form>
+
+<form id="bigform" method="get" action="ajaxtest_assets/empty.js">
+  <div id="inputs">
+    <input type="text"   name="dummy"  id="dummy_disabled" disabled="disabled"/>
+    <input type="submit" name="commit" id="submit" />
+    <input type="button" name="clicky" value="click me" />
+    <input type="reset"  name="revert" />
+    <input type="text"   name="greeting" id="focus_text" value="Hello" />
+  </div>
+
+  <!-- some edge cases in serialization -->
+  <div id="value_checks">
+    <input name="twin" type="text" value="" /> 
+    <input name="twin" type="text" value="siamese" />
+    <!-- Rails checkbox hack with hidden input: -->
+    <input name="checky" type="checkbox" id="checkbox_hack" value="1" /> 
+    <input name="checky" type="hidden" value="0" />
+  </div>
+
+  <!-- all variations of SELECT controls -->
+  <div id="selects_wrapper">
+    <select name="vu">
+       <option value="1" selected="selected">One</option>
+       <option value="2">Two</option>
+       <option value="3">Three</option>
+    </select>
+    <select id="multiSel1" name="vm[]" multiple="multiple">
+       <option id="multiSel1_opt1" value="1" selected="selected">One</option>
+       <option id="multiSel1_opt2" value="2">Two</option>
+       <option id="multiSel1_opt3" value="3" selected="selected">Three</option>
+    </select>
+    <select name="nvu">
+       <option selected="selected">One</option>
+       <option value="2">Two</option>
+       <option value="3">Three</option>
+    </select>
+
+    <fieldset id="selects_fieldset">
+      <select name="nvm[]" multiple="multiple">
+         <option selected="selected">One</option>
+         <option>Two</option>
+         <option selected="selected">Three</option>
+      </select>
+      <select name="evu">
+         <option value="" selected="selected">One</option>
+         <option value="2">Two</option>
+         <option value="3">Three</option>
+      </select>
+      <select name="evm[]" multiple="multiple">
+         <option value="" selected="selected">One</option>
+         <option>Two</option>
+         <option selected="selected">Three</option>
+      </select>
+    </fieldset>
+  </div>
+
+  <div id="various">
+    <select name="tf_selectOne"><option selected="selected"></option><option>1</option></select>
+    <textarea name="tf_textarea"></textarea>
+    <input type="checkbox" name="tf_checkbox" value="on" />
+    <select name="tf_selectMany" multiple="multiple"></select>
+    <input type="text" name="tf_text" />
+    <div>This is not a form element</div>
+    <input type="radio" name="tf_radio" value="on" />
+    <input type="hidden" name="tf_hidden" />
+    <input type="password" name="tf_password" />
+    <button name="tf_button"></button>
+  </div>
+</form>
+
+<form id="form_focus_hidden" style="display: none">
+  <input type="text" />
+</form>
+
+<form id="form_with_file_input">
+  <input type="file" name="file_name" value="foo" />
+</form>
+
+<form id="form_empty"></form>
+
+<!-- tabindexed forms -->
+<div id="tabindex">
+  <form id="ffe">
+    <p><input type="text" disabled="disabled" id="ffe_disabled" /></p>
+    <input type="hidden" id="ffe_hidden" />
+    <input type="checkbox" id="ffe_checkbox" />
+  </form>
+
+  <form id="ffe_ti">
+    <p><input type="text" disabled="disabled" id="ffe_ti_disabled" /></p>
+    <input type="hidden" id="ffe_ti_hidden" />
+    <input type="checkbox" id="ffe_ti_checkbox" />
+    <input type="submit" id="ffe_ti_submit" tabindex="1" />
+  </form>
+
+  <form id="ffe_ti2">
+    <p><input type="text" disabled="disabled" id="ffe_ti2_disabled" /></p>
+    <input type="hidden" id="ffe_ti2_hidden" />
+    <input type="checkbox" id="ffe_ti2_checkbox" tabindex="0" />
+    <input type="submit" id="ffe_ti2_submit" tabindex="1" />
+  </form>
+  
+</div>
+
+<form id="form_with_duplicate_input_names" style="display:none">
+  <input type="hidden" name="fact"    id="fdn_f_1" value="sea-wet" />
+  <input type="hidden" name="opinion" id="fnd_o_1" value="sea-cold" />
+  <input type="hidden" name="fact"    id="fnd_f_2" value="sun-hot" />
+  <input type="hidden" name="opinion" id="fnd_o_2" value="sun-ugly" />
+</form>
+
+<form id="form_with_inputs_needing_encoding" style="display:none">
+  <input type="hidden" name="user[wristbands][ ][nickname]" id="fine_1" value="Hässlich" />
+</form>
+
+<form id="form_with_troublesome_input_names">
+  <input type="text" name="length" value="foo" />
+  <input type="text" name="bar"    value="baz" />
+</form>
+
+<form id="form_with_multiple_select">
+  <input type="text" name="peewee" value="herman" />
+  <input type="hidden" name="colors" value="pink" />
+  <select name="colors" multiple="multiple">
+    <option value="blue" selected>blue</option>
+    <option value="red">red</option>
+    <option value="green">green</option>
+    <option value="yellow" selected>yellow</option>
+    <option value="not grey" selected>grey</option>
+  </select>
+  <select name="number">
+    <option value="0">0</option>
+    <option value="1">1</option>
+    <option value="2" selected>2</option>
+    <option value="3">3</option>
+  </select>
+  <input type="submit" />
+</form>
+</body>
+</html>
