@@ -11,6 +11,8 @@ function isDisplayed(element) {
   return true;
 }
 
+var IE8 = Prototype.Browser.IE && navigator.userAgent.indexOf('MSIE 8');
+
 suite("Layout Namespace",function(){
   test("preCompute argument of layout", function() {
     var preComputedLayout = $('box1').getLayout(true),
@@ -102,7 +104,14 @@ suite("Layout Namespace",function(){
     var layout = $('box6').getLayout();
     
     assert.equal(0, layout.get('top'), 'top');
-    assert.strictEqual($('box6_parent'), $('box6').getOffsetParent());
+    if(IE8)
+    {
+      assert($('box6_parent') === $('box6').getOffsetParent());
+    }
+    else
+    {
+      assert.strictEqual($('box6_parent'), $('box6').getOffsetParent());
+    }
   });
   
   test("layout on statically-positioned element with percentage width", function() {
