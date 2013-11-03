@@ -101,12 +101,11 @@
   </ul>
 	<div id="mocha"></div>
   <script src="../dist/prototype.min.js"></script>
-  <script src="es5polyfill.js"></script>
   <script src="mocha.js"></script>
-  <script src="chai.js"></script>
+  <script src="proclaim.js"></script>
 	<script>mocha.setup('tdd')</script>
 	<script>
-    var assert = chai.assert;
+    var assert = proclaim;
     function assertenum(varA, varB, msg){
       if(varA.length !== varB.length) throw new Error(msg || 'failed')
       Object.keys(varA).each(function(t){
