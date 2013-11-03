@@ -59,7 +59,7 @@ suite("Hash Namespace",function(){
   
   test("Hash.toObject", function() {
     var hash = $H(HashFixtures.many), object = hash.toObject();
-    assert.instanceOf(object,Object);
+    assert.isInstanceOf(object,Object);
     assertHashEqual(HashFixtures.many, object);
     assert.notStrictEqual(HashFixtures.many, object);
     hash.set('foo', 'bar');
@@ -69,8 +69,8 @@ suite("Hash Namespace",function(){
   test("Hash.construct()", function() {
     var object = Object.clone(HashFixtures.one);
     var h = new Hash(object), h2 = $H(object);
-    assert.instanceOf(h,Hash);
-    assert.instanceOf(h2,Hash);
+    assert.isInstanceOf(h,Hash);
+    assert.isInstanceOf(h2,Hash);
     
     assertHashEqual({}, new Hash());
     assertHashEqual(object, h);
@@ -80,7 +80,7 @@ suite("Hash Namespace",function(){
     assertHashNotEqual(object, h);
     
     var clone = $H(h);
-    assert.instanceOf(clone,Hash);
+    assert.isInstanceOf(clone,Hash);
     assertHashEqual(h, clone);
     h.set('foo', 'foo');
     assertHashNotEqual(h, clone);
@@ -120,8 +120,8 @@ suite("Hash Namespace",function(){
     var h = $H(HashFixtures.many);
     assert.notStrictEqual(h, h.merge());
     assert.notStrictEqual(h, h.merge({}));
-    assert.instanceOf(h.merge(),Hash);
-    assert.instanceOf(h.merge({}),Hash);
+    assert.isInstanceOf(h.merge(),Hash);
+    assert.isInstanceOf(h.merge({}),Hash);
     assertHashEqual(h, h.merge());
     assertHashEqual(h, h.merge({}));
     assertHashEqual(h, h.merge($H()));
@@ -178,7 +178,7 @@ suite("Hash Namespace",function(){
   test("Hash.clone()", function() {
     var h = $H(HashFixtures.many);
     assertHashEqual(h, h.clone());
-    assert.instanceOf(h.clone(),Hash);
+    assert.isInstanceOf(h.clone(),Hash);
     assert.notStrictEqual(h, h.clone());
   });
   

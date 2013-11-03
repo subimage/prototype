@@ -252,8 +252,8 @@ suite("AJAX Interactions",function(){
 
   test("Callbacks", function(done) {
     var options = extendDefault({
-      onCreate: function(transport) { assert.instanceOf(transport,Ajax.Response) },
-      onComplete: function(transport) { assert.instanceOf(transport,Ajax.Response) ; done() }
+      onCreate: function(transport) { assert.isInstanceOf(transport,Ajax.Response) },
+      onComplete: function(transport) { assert.isInstanceOf(transport,Ajax.Response) ; done() }
     });
     
     Ajax.Request.Events.each(function(state){
