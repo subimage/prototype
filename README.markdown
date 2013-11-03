@@ -60,7 +60,7 @@ Find out how to contribute: <http://prototypejs.org/contribute>.
 Running Unit Tests
 -------------
 
-New tests have been written with [MochaJS](http://visionmedia.github.io/mocha/) and [ChaiJS](http://chaijs.com/) assertions. The AJAX and Form Namespaces require a webserver to echo responses which is built into the Mocha Test script to launch a [NodeJS](http://nodejs.org/) Webserver. Mocha can also run tests using [PhantomJS](http://phantomjs.org/) which allows command line testing.
+New tests have been written with [MochaJS](http://visionmedia.github.io/mocha/) and [ProclaimJS](https://github.com/rowanmanning/proclaim) assertions. The AJAX and Form Namespaces require a webserver to echo responses which is built into the Mocha Test script to launch a [NodeJS](http://nodejs.org/) Webserver. Mocha can also run tests using [PhantomJS](http://phantomjs.org/) which allows command line testing.
 
  1. Install NodeJS
  2. `$ npm -g install mocha phantomjs mocha-phantomjs open`
