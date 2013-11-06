@@ -1,4 +1,6 @@
-/*  Prototype JavaScript framework, version 1.7.1
+/**
+ * @preserve
+ * Prototype JavaScript framework, version 1.7.1
  *  (c) 2005-2010 Sam Stephenson
  *
  *  Prototype is freely distributable under the terms of an MIT-style license.
@@ -12,6 +14,8 @@ var Prototype = {
 
   Browser: (function(){
     var ua = navigator.userAgent;
+    // Opera (at least) 8.x+ has "Opera" as a [[Class]] of `window.opera`
+    // This is a safer inference than plain boolean type conversion of `window.opera`
     var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
     return {
       IE:             !!window.attachEvent && !isOpera,
@@ -32,6 +36,7 @@ var Prototype = {
       return !!(constructor && constructor.prototype);
     })(),
     SpecificElementExtensions: (function() {
+      // First, try the named class
       if (typeof window.HTMLDivElement !== 'undefined')
         return true;
 
@@ -62,14 +67,17 @@ if (Prototype.Browser.MobileSafari)
 /* Based on Alex Arnell's inheritance implementation. */
 
 var Class = (function() {
-
+  
+  // Some versions of JScript fail to enumerate over properties, names of which 
+  // correspond to non-enumerable properties in the prototype chain
   var IS_DONTENUM_BUGGY = (function(){
     for (var p in { toString: 1 }) {
+      // check actual property name, so that it works with augmented Object.prototype
       if (p === 'toString') return false;
     }
     return true;
   })();
-
+  
   function subclass() {};
   function create() {
     var parent = null, properties = $A(arguments);
@@ -104,6 +112,9 @@ var Class = (function() {
     var ancestor   = this.superclass && this.superclass.prototype,
         properties = Object.keys(source);
 
+    // IE6 doesn't enumerate `toString` and `valueOf` (among other built-in `Object.prototype`) properties,
+    // Force copy if they're not Object.prototype ones.
+    // Do not copy other Object.prototype.* for performance reasons
     if (IS_DONTENUM_BUGGY) {
       if (source.toString != Object.prototype.toString)
         properties.push("toString");
@@ -119,11 +130,19 @@ var Class = (function() {
         value = (function(m) {
           return function() { return ancestor[m].apply(this, arguments); };
         })(property).wrap(method);
-
+        
+        // We used to use `bind` to ensure that `toString` and `valueOf`
+        // methods were called in the proper context, but now that we're 
+        // relying on native bind and/or an existing polyfill, we can't rely
+        // on the nuanced behavior of whatever `bind` implementation is on
+        // the page.
+        //
+        // MDC's polyfill, for instance, doesn't like binding functions that
+        // haven't got a `prototype` property defined.
         value.valueOf = (function(method) {
           return function() { return method.valueOf.call(method); };
         })(method);
-
+        
         value.toString = (function(method) {
           return function() { return method.toString.call(method); };
         })(method);
@@ -161,19 +180,22 @@ var Class = (function() {
         typeof JSON.stringify === 'function' &&
         JSON.stringify(0) === '0' &&
         typeof JSON.stringify(Prototype.K) === 'undefined';
-
-
-
+        
+  
+  
   var DONT_ENUMS = ['toString', 'toLocaleString', 'valueOf',
    'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor'];
-
+  
+  // Some versions of JScript fail to enumerate over properties, names of which 
+  // correspond to non-enumerable properties in the prototype chain
   var IS_DONTENUM_BUGGY = (function(){
     for (var p in { toString: 1 }) {
+      // check actual property name, so that it works with augmented Object.prototype
       if (p === 'toString') return false;
     }
     return true;
   })();
-
+        
   function Type(o) {
     switch(o) {
       case null: return NULL_TYPE;
@@ -187,7 +209,7 @@ var Class = (function() {
     }
     return OBJECT_TYPE;
   }
-
+  
   function extend(destination, source) {
     for (var property in source)
       destination[property] = source[property];
@@ -286,14 +308,15 @@ var Class = (function() {
       if (_hasOwnProperty.call(object, property))
         results.push(property);
     }
-
+    
+    // Account for the DontEnum properties in affected browsers.
     if (IS_DONTENUM_BUGGY) {
       for (var i = 0; property = DONT_ENUMS[i]; i++) {
         if (_hasOwnProperty.call(object, property))
           results.push(property);
       }
     }
-
+    
     return results;
   }
 
@@ -315,10 +338,10 @@ var Class = (function() {
   function isArray(object) {
     return _toString.call(object) === ARRAY_CLASS;
   }
-
-  var hasNativeIsArray = (typeof Array.isArray == 'function')
+  
+  var hasNativeIsArray = (typeof Array.isArray == 'function') 
     && Array.isArray([]) && !Array.isArray({});
-
+  
   if (hasNativeIsArray) {
     isArray = Array.isArray;
   }
@@ -338,7 +361,7 @@ var Class = (function() {
   function isNumber(object) {
     return _toString.call(object) === NUMBER_CLASS;
   }
-
+  
   function isDate(object) {
     return _toString.call(object) === DATE_CLASS;
   }
@@ -394,16 +417,18 @@ Object.extend(Function.prototype, (function() {
 
     if (!Object.isFunction(this))
       throw new TypeError("The object is not callable.");
-
+      
     var nop = function() {};
     var __method = this, args = slice.call(arguments, 1);
-
+    
     var bound = function() {
       var a = merge(args, arguments);
+      // Ignore the supplied context when the bound function is called with
+      // the "new" keyword.
       var c = this instanceof bound ? this : context;
       return __method.apply(c, a);
     };
-
+        
     nop.prototype   = this.prototype;
     bound.prototype = new nop();
 
@@ -456,7 +481,7 @@ Object.extend(Function.prototype, (function() {
       return __method.apply(null, a);
     };
   }
-
+  
   var extensions = {
     argumentNames:       argumentNames,
     bindAsEventListener: bindAsEventListener,
@@ -466,7 +491,7 @@ Object.extend(Function.prototype, (function() {
     wrap:                wrap,
     methodize:           methodize
   };
-
+  
   if (!Function.prototype.bind)
     extensions.bind = bind;
 
@@ -476,8 +501,8 @@ Object.extend(Function.prototype, (function() {
 
 
 (function(proto) {
-
-
+  
+  
   function toISOString() {
     return this.getUTCFullYear() + '-' +
       (this.getUTCMonth() + 1).toPaddedString(2) + '-' +
@@ -486,15 +511,15 @@ Object.extend(Function.prototype, (function() {
       this.getUTCMinutes().toPaddedString(2) + ':' +
       this.getUTCSeconds().toPaddedString(2) + 'Z';
   }
-
+  
 
   function toJSON() {
     return this.toISOString();
   }
-
+  
   if (!proto.toISOString) proto.toISOString = toISOString;
   if (!proto.toJSON) proto.toJSON = toJSON;
-
+  
 })(Date.prototype);
 
 
@@ -528,6 +553,11 @@ var PeriodicalExecuter = Class.create({
 
   onTimerEvent: function() {
     if (!this.currentlyExecuting) {
+      // IE doesn't support `finally` statements unless all errors are caught.
+      // We mimic the behaviour of `finally` statements by duplicating code
+      // that would belong in it. First at the bottom of the `try` statement
+      // (for errorless cases). Secondly, inside a `catch` statement which
+      // rethrows any caught errors.
       try {
         this.currentlyExecuting = true;
         this.execute();
@@ -640,6 +670,7 @@ Object.extend(String.prototype, (function() {
   }
 
   function unescapeHTML() {
+    // Warning: In 1.7 String#unescapeHTML will no longer call String#stripTags.
     return this.stripTags().replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
   }
 
@@ -740,7 +771,7 @@ Object.extend(String.prototype, (function() {
     } catch (e) { }
     throw new SyntaxError('Badly formed JSON string: ' + this.inspect());
   }
-
+  
   function parseJSON() {
     var json = this.unfilterJSON();
     return JSON.parse(json);
@@ -752,6 +783,8 @@ Object.extend(String.prototype, (function() {
 
   function startsWith(pattern, position) {
     position = Object.isNumber(position) ? position : 0;
+    // We use `lastIndexOf` instead of `indexOf` to avoid tying execution
+    // time to string length when string doesn't start with pattern.
     return this.lastIndexOf(pattern, position) === position;
   }
 
@@ -761,6 +794,8 @@ Object.extend(String.prototype, (function() {
     if (position < 0) position = 0;
     if (position > this.length) position = this.length;
     var d = position - pattern.length;
+    // We use `indexOf` instead of `lastIndexOf` to avoid tying execution
+    // time to string length when string doesn't end with pattern.
     return d >= 0 && this.indexOf(pattern, d) === d;
   }
 
@@ -781,6 +816,8 @@ Object.extend(String.prototype, (function() {
     sub:            sub,
     scan:           scan,
     truncate:       truncate,
+    // Firefox 3.5+ supports String.prototype.trim
+    // (`trim` is ~ 5x faster than `strip` in FF3.5)
     strip:          String.prototype.trim || strip,
     stripTags:      stripTags,
     stripScripts:   stripScripts,
@@ -801,7 +838,9 @@ Object.extend(String.prototype, (function() {
     unfilterJSON:   unfilterJSON,
     isJSON:         isJSON,
     evalJSON:       NATIVE_JSON_PARSE_SUPPORT ? parseJSON : evalJSON,
+    //ECMA 6 supports contains(), if it exists map include() to contains()
     include:        String.prototype.contains || include,
+    // Firefox 18+ supports String.prototype.startsWith, String.prototype.endsWith
     startsWith:     String.prototype.startsWith || startsWith,
     endsWith:       String.prototype.endsWith || endsWith,
     empty:          empty,
@@ -828,7 +867,7 @@ var Template = Class.create({
 
       var ctx = object, expr = match[3],
           pattern = /^([^.[]+|\[((?:.*?[^\\])?)\])(\.|\[|$)/;
-
+          
       match = pattern.exec(expr);
       if (match == null) return before;
 
@@ -1095,6 +1134,8 @@ var Enumerable = (function() {
 
 function $A(iterable) {
   if (!iterable) return [];
+  // Safari <2.0.4 crashes when accessing property of a node list with property accessor.
+  // It nevertheless works fine with `in` operator, which is why we use it here
   if ('toArray' in Object(iterable)) return iterable.toArray();
   var length = iterable.length || 0, results = new Array(length);
   while (length--) results[length] = iterable[length];
@@ -1122,7 +1163,7 @@ Array.from = $A;
     }
   }
   if (!_each) _each = each;
-
+  
   function clear() {
     this.length = 0;
     return this;
@@ -1191,51 +1232,70 @@ Array.from = $A;
 
   function indexOf(item, i) {
     if (this == null) throw new TypeError();
-
+    
     var array = Object(this), length = array.length >>> 0;
     if (length === 0) return -1;
-
+    
+    // The rules for the `fromIndex` argument are tricky. Let's follow the
+    // spec line-by-line.
     i = Number(i);
     if (isNaN(i)) {
       i = 0;
     } else if (i !== 0 && isFinite(i)) {
+      // Equivalent to ES5's `ToInteger` operation.
       i = (i > 0 ? 1 : -1) * Math.floor(Math.abs(i));
     }
-
+    
+    // If the search index is greater than the length of the array,
+    // return -1.
     if (i > length) return -1;
-
+    
+    // If the search index is negative, take its absolute value, subtract it
+    // from the length, and make that the new search index. If it's still
+    // negative, make it 0.
     var k = i >= 0 ? i : Math.max(length - Math.abs(i), 0);
     for (; k < length; k++)
       if (k in array && array[k] === item) return k;
     return -1;
   }
-
+  
 
   function lastIndexOf(item, i) {
     if (this == null) throw new TypeError();
-
+    
     var array = Object(this), length = array.length >>> 0;
     if (length === 0) return -1;
-
+    
+    // The rules for the `fromIndex` argument are tricky. Let's follow the
+    // spec line-by-line.
     if (!Object.isUndefined(i)) {
       i = Number(i);
       if (isNaN(i)) {
         i = 0;
       } else if (i !== 0 && isFinite(i)) {
+        // Equivalent to ES5's `ToInteger` operation.
         i = (i > 0 ? 1 : -1) * Math.floor(Math.abs(i));
       }
     } else {
       i = length;
     }
-
+    
+    // If fromIndex is positive, clamp it to the last index in the array;
+    // if it's negative, subtract its absolute value from the array's length.
     var k = i >= 0 ? Math.min(i, length - 1) :
      length - Math.abs(i);
 
+    // (If fromIndex is still negative, it'll bypass this loop altogether and
+    // return -1.)
     for (; k >= 0; k--)
       if (k in array && array[k] === item) return k;
     return -1;
   }
 
+  // Replaces a built-in function. No PDoc needed.
+  //
+  // Used instead of the broken version of Array#concat in some versions of
+  // Opera. Made to be ES5-compliant.
   function concat(_) {
     var array = [], items = slice.call(arguments, 0), item, n = 0;
     items.unshift(this);
@@ -1253,23 +1313,48 @@ Array.from = $A;
     array.length = n;
     return array;
   }
-
-
+  
+  // Certain ES5 array methods have the same names as Prototype array methods
+  // and perform the same functions.
+  //
+  // Prototype's implementations of these methods differ from the ES5 spec in
+  // the way a missing iterator function is handled. Prototype uses 
+  // `Prototype.K` as a default iterator, while ES5 specifies that a
+  // `TypeError` must be thrown. Implementing the ES5 spec completely would 
+  // break backward compatibility and would force users to pass `Prototype.K`
+  // manually. 
+  //
+  // Instead, if native versions of these methods exist, we wrap the existing
+  // methods with our own behavior. This has very little performance impact.
+  // It violates the spec by suppressing `TypeError`s for certain methods,
+  // but that's an acceptable trade-off.
+  
   function wrapNative(method) {
     return function() {
       if (arguments.length === 0) {
+        // No iterator was given. Instead of throwing a `TypeError`, use
+        // `Prototype.K` as the default iterator.
         return method.call(this, Prototype.K);
       } else if (arguments[0] === undefined) {
+        // Same as above.
         var args = slice.call(arguments, 1);
         args.unshift(Prototype.K);
         return method.apply(this, args);
       } else {
+        // Pass straight through to the native method.
         return method.apply(this, arguments);
       }
     };
   }
-
-
+  
+  // Note that #map, #filter, #some, and #every take some extra steps for
+  // ES5 compliance: the context in which they're called is coerced to an
+  // object, and that object's `length` property is coerced to a finite
+  // integer. This makes it easier to use the methods as generics.
+  //
+  // This means that they behave a little differently from other methods in
+  // `Enumerable`/`Array` that don't collide with ES5, but that's OK.
+  
   function map(iterator) {
     if (this == null) throw new TypeError();
     iterator = iterator || Prototype.K;
@@ -1286,15 +1371,15 @@ Array.from = $A;
     results.length = n;
     return results;
   }
-
+  
   if (arrayProto.map) {
     map = wrapNative(Array.prototype.map);
   }
-
+  
   function filter(iterator) {
     if (this == null || !Object.isFunction(iterator))
       throw new TypeError();
-
+    
     var object = Object(this);
     var results = [], context = arguments[1], value;
 
@@ -1310,6 +1395,8 @@ Array.from = $A;
   }
 
   if (arrayProto.filter) {
+    // `Array#filter` requires an iterator by nature, so we don't need to
+    // wrap it.
     filter = Array.prototype.filter;
   }
 
@@ -1324,15 +1411,15 @@ Array.from = $A;
         return true;
       }
     }
-
+      
     return false;
   }
-
+  
   if (arrayProto.some) {
     var some = wrapNative(Array.prototype.some);
   }
-
-
+  
+  
   function every(iterator) {
     if (this == null) throw new TypeError();
     iterator = iterator || Prototype.K;
@@ -1344,21 +1431,26 @@ Array.from = $A;
         return false;
       }
     }
-
+      
     return true;
   }
-
+  
   if (arrayProto.every) {
     var every = wrapNative(Array.prototype.every);
   }
-
+  
+  // Prototype's `Array#inject` behaves similarly to ES5's `Array#reduce`.
   var _reduce = arrayProto.reduce;
   function inject(memo, iterator) {
     iterator = iterator || Prototype.K;
     var context = arguments[2];
+    // The iterator must be bound, as `Array#reduce` always binds to
+    // `undefined`.
     return _reduce.call(this, iterator.bind(context), memo);
   }
-
+  
+  // Piggyback on `Array#reduce` if it exists; otherwise fall back to the
+  // standard `Enumerable.inject`.
   if (!arrayProto.reduce) {
     var inject = Enumerable.inject;
   }
@@ -1370,7 +1462,7 @@ Array.from = $A;
 
   Object.extend(arrayProto, {
     _each:     _each,
-
+    
     map:       map,
     collect:   map,
     select:    filter,
@@ -1381,7 +1473,7 @@ Array.from = $A;
     every:     every,
     all:       every,
     inject:    inject,
-
+    
     clear:     clear,
     first:     first,
     last:      last,
@@ -1397,12 +1489,14 @@ Array.from = $A;
     inspect:   inspect
   });
 
+  // fix for opera
   var CONCAT_ARGUMENTS_BUGGY = (function() {
     return [].concat(arguments)[0][0] !== 1;
   })(1,2);
 
   if (CONCAT_ARGUMENTS_BUGGY) arrayProto.concat = concat;
 
+  // Use native browser JS 1.6 implementations if available.
   if (!arrayProto.indexOf) arrayProto.indexOf = indexOf;
   if (!arrayProto.lastIndexOf) arrayProto.lastIndexOf = lastIndexOf;
 })();
@@ -1415,7 +1509,9 @@ var Hash = Class.create(Enumerable, (function() {
     this._object = Object.isHash(object) ? object.toObject() : Object.clone(object);
   }
 
+  // Docs for #each even though technically it's implemented by Enumerable
 
+  // Our _internal_ each
   function _each(iterator, context) {
     var i = 0;
     for (var key in this._object) {
@@ -1432,6 +1528,7 @@ var Hash = Class.create(Enumerable, (function() {
   }
 
   function get(key) {
+    // simulating poorly supported hasOwnProperty
     if (this._object[key] !== Object.prototype[key])
       return this._object[key];
   }
@@ -1446,8 +1543,8 @@ var Hash = Class.create(Enumerable, (function() {
     return Object.clone(this._object);
   }
 
-
-
+  
+  
   function keys() {
     return this.pluck('key');
   }
@@ -1474,13 +1571,18 @@ var Hash = Class.create(Enumerable, (function() {
     });
   }
 
+  // Private. No PDoc necessary.
   function toQueryPair(key, value) {
     if (Object.isUndefined(value)) return key;
-
+    
     value = String.interpret(value);
 
+    // Normalize newlines as \r\n because the HTML spec says newlines should
+    // be encoded as CRLFs.
     value = value.gsub(/(\r)?\n/, '\r\n');
     value = encodeURIComponent(value);
+    // Likewise, according to the spec, spaces should be '+' rather than
+    // '%20'.
     value = value.gsub(/%20/, '+');
     return key + '=' + value;
   }
@@ -1488,13 +1590,18 @@ var Hash = Class.create(Enumerable, (function() {
   function toQueryString() {
     return this.inject([], function(results, pair) {
       var key = encodeURIComponent(pair.key), values = pair.value;
-
+      
       if (values && typeof values == 'object') {
         if (Object.isArray(values)) {
+          // We used to use `Array#map` here to get the query pair for each
+          // item in the array, but that caused test regressions once we
+          // added the sparse array behavior for array iterator methods.
+          // Changed to an ordinary `for` loop so that we can handle
+          // `undefined` values ourselves rather than have them skipped.
           var queryValues = [];
           for (var i = 0, len = values.length, value; i < len; i++) {
             value = values[i];
-            queryValues.push(toQueryPair(key, value));
+            queryValues.push(toQueryPair(key, value));            
           }
           return results.concat(queryValues);
         }
@@ -1717,11 +1824,13 @@ Ajax.Request = Class.create(Ajax.Base, {
           Object.toQueryString(this.options.parameters);
 
     if (!['get', 'post'].include(this.method)) {
+      // simulate other verbs over post
       params += (params ? '&' : '') + "_method=" + this.method;
       this.method = 'post';
     }
 
     if (params && this.method === 'get') {
+      // when GET, append parameters to URL
       this.url += (this.url.include('?') ? '&' : '?') + params;
     }
 
@@ -1779,6 +1888,7 @@ Ajax.Request = Class.create(Ajax.Base, {
             headers['Connection'] = 'close';
     }
 
+    // user-defined headers
     if (typeof this.options.requestHeaders == 'object') {
       var extras = this.options.requestHeaders;
 
@@ -1789,6 +1899,7 @@ Ajax.Request = Class.create(Ajax.Base, {
         $H(extras).each(function(pair) { headers[pair.key] = pair.value });
     }
 
+    // skip null or undefined values
     for (var name in headers)
       if (headers[name] != null)
         this.transport.setRequestHeader(name, headers[name]);
@@ -1801,6 +1912,7 @@ Ajax.Request = Class.create(Ajax.Base, {
 
   getStatus: function() {
     try {
+      // IE sometimes returns 1223 for a 204 response.
       if (this.transport.status === 1223) return 204;
       return this.transport.status || 0;
     } catch (e) { return 0 }
@@ -1834,6 +1946,7 @@ Ajax.Request = Class.create(Ajax.Base, {
     }
 
     if (state == 'Complete') {
+      // avoid memory leak in MSIE: clean up
       this.transport.onreadystatechange = Prototype.emptyFunction;
     }
   },
@@ -1878,6 +1991,7 @@ Ajax.Request.Events =
 
 
 Ajax.Response = Class.create({
+  // Don't document the constructor; should never be manually instantiated.
   initialize: function(request){
     this.request = request;
     var transport  = this.transport  = request.transport,
@@ -1930,10 +2044,21 @@ Ajax.Response = Class.create({
     if (!json) return null;
 
     try {
+      // Browsers expect HTTP headers to be ASCII and nothing else. Running
+      // them through `decodeURIComponent` processes them with the page's
+      // specified encoding.
       json = decodeURIComponent(escape(json));
     } catch(e) {
+      // Except Chrome doesn't seem to need this, and calling
+      // `decodeURIComponent` on text that's already in the proper encoding
+      // will throw a `URIError`. The ugly solution is to assume that a
+      // `URIError` raised here signifies that the text is, in fact, already 
+      // in the correct encoding, and treat the failure as a good sign.
+      //
+      // This is ugly, but so too is sending extended characters in an HTTP
+      // header with no spec to back you up.
     }
-
+    
     try {
       return json.evalJSON(this.request.options.sanitizeJSON ||
         !this.request.isSameOrigin());
@@ -2035,12 +2160,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 });
 
 (function(GLOBAL) {
-
+  
   var UNDEFINED;
   var SLICE = Array.prototype.slice;
-
+  
+  // Try to reuse the same created element as much as possible. We'll use
+  // this DIV for capability checks (where possible) and for normalizing
+  // HTML content.
   var DIV = document.createElement('div');
-
+  
 
   function $(element) {
     if (arguments.length > 1) {
@@ -2048,17 +2176,18 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         elements.push($(arguments[i]));
       return elements;
     }
-
+    
     if (Object.isString(element))
       element = document.getElementById(element);
     return Element.extend(element);
   }
-
+  
   GLOBAL.$ = $;
-
-
+  
+  
+  // Define the DOM Level 2 node type constants if they're missing.
   if (!GLOBAL.Node) GLOBAL.Node = {};
-
+  
   if (!GLOBAL.Node.ELEMENT_NODE) {
     Object.extend(GLOBAL.Node, {
       ELEMENT_NODE:                1,
@@ -2075,83 +2204,94 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       NOTATION_NODE:              12
     });
   }
-
+  
+  // The cache for all our created elements.
   var ELEMENT_CACHE = {};
-
+  
+  // For performance reasons, we create new elements by cloning a "blank"
+  // version of a given element. But sometimes this causes problems. Skip
+  // the cache if:
+  //   (a) We're creating a SELECT element (troublesome in IE6);
+  //   (b) We're setting the `type` attribute on an INPUT element
+  //       (troublesome in IE9).
   function shouldUseCreationCache(tagName, attributes) {
     if (tagName === 'select') return false;
     if ('type' in attributes) return false;
     return true;
   }
-
+  
+  // IE requires that `name` and `type` attributes be set this way.
   var HAS_EXTENDED_CREATE_ELEMENT_SYNTAX = (function(){
     try {
       var el = document.createElement('<input name="x">');
       return el.tagName.toLowerCase() === 'input' && el.name === 'x';
-    }
+    } 
     catch(err) {
       return false;
     }
   })();
-
-
+  
+  
   var oldElement = GLOBAL.Element;
   function Element(tagName, attributes) {
     attributes = attributes || {};
     tagName = tagName.toLowerCase();
-
+    
     if (HAS_EXTENDED_CREATE_ELEMENT_SYNTAX && attributes.name) {
       tagName = '<' + tagName + ' name="' + attributes.name + '">';
       delete attributes.name;
       return Element.writeAttribute(document.createElement(tagName), attributes);
     }
-
+    
     if (!ELEMENT_CACHE[tagName])
       ELEMENT_CACHE[tagName] = Element.extend(document.createElement(tagName));
-
+    
     var node = shouldUseCreationCache(tagName, attributes) ?
      ELEMENT_CACHE[tagName].cloneNode(false) : document.createElement(tagName);
-
+     
     return Element.writeAttribute(node, attributes);
   }
-
+  
   GLOBAL.Element = Element;
-
+  
   Object.extend(GLOBAL.Element, oldElement || {});
   if (oldElement) GLOBAL.Element.prototype = oldElement.prototype;
-
+  
   Element.Methods = { ByTag: {}, Simulated: {} };
 
+  // Temporary object for holding all our initial element methods. We'll add
+  // them all at once at the bottom of this file.
   var methods = {};
-
+  
   var INSPECT_ATTRIBUTES = { id: 'id', className: 'class' };
   function inspect(element) {
     element = $(element);
     var result = '<' + element.tagName.toLowerCase();
-
+    
     var attribute, value;
     for (var property in INSPECT_ATTRIBUTES) {
       attribute = INSPECT_ATTRIBUTES[property];
       value = (element[property] || '').toString();
       if (value) result += ' ' + attribute + '=' + value.inspect(true);
     }
-
+    
     return result + '>';
   }
-
+  
   methods.inspect = inspect;
-
-
+  
+  // VISIBILITY
+  
   function visible(element) {
     return $(element).style.display !== 'none';
   }
-
+  
   function toggle(element, bool) {
     element = $(element);
     if (Object.isUndefined(bool))
       bool = !Element.visible(element);
     Element[bool ? 'show' : 'hide'](element);
-
+    
     return element;
   }
 
@@ -2160,28 +2300,30 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     element.style.display = 'none';
     return element;
   }
-
+  
   function show(element) {
     element = $(element);
     element.style.display = '';
     return element;
   }
-
-
+  
+  
   Object.extend(methods, {
     visible: visible,
     toggle:  toggle,
     hide:    hide,
     show:    show
   });
-
-
+  
+  // MANIPULATION
+  
   function remove(element) {
     element = $(element);
     element.parentNode.removeChild(element);
     return element;
   }
-
+  
+  // see: http://support.microsoft.com/kb/276228
   var SELECT_ELEMENT_INNERHTML_BUGGY = (function(){
     var el = document.createElement("select"),
         isBuggy = true;
@@ -2193,6 +2335,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     return isBuggy;
   })();
 
+  // see: http://msdn.microsoft.com/en-us/library/ms533897(VS.85).aspx
   var TABLE_ELEMENT_INNERHTML_BUGGY = (function(){
     try {
       var el = document.createElement("table");
@@ -2206,7 +2349,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       return true;
     }
   })();
-
+  
   var LINK_ELEMENT_INNERHTML_BUGGY = (function() {
     try {
       var el = document.createElement('div');
@@ -2218,9 +2361,9 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       return true;
     }
   })();
-
+  
   var ANY_INNERHTML_BUGGY = SELECT_ELEMENT_INNERHTML_BUGGY ||
-   TABLE_ELEMENT_INNERHTML_BUGGY || LINK_ELEMENT_INNERHTML_BUGGY;
+   TABLE_ELEMENT_INNERHTML_BUGGY || LINK_ELEMENT_INNERHTML_BUGGY;    
 
   var SCRIPT_ELEMENT_REJECTS_TEXTNODE_APPENDING = (function () {
     var s = document.createElement("script"),
@@ -2235,45 +2378,53 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     s = null;
     return isBuggy;
   })();
-
+  
   function update(element, content) {
     element = $(element);
-
+    
+    // Purge the element's existing contents of all storage keys and
+    // event listeners, since said content will be replaced no matter
+    // what.
     var descendants = element.getElementsByTagName('*'),
      i = descendants.length;
     while (i--) purgeElement(descendants[i]);
-
+    
     if (content && content.toElement)
       content = content.toElement();
-
+      
     if (Object.isElement(content))
       return element.update().insert(content);
-
-
+      
+    
     content = Object.toHTML(content);
     var tagName = element.tagName.toUpperCase();
-
+    
     if (tagName === 'SCRIPT' && SCRIPT_ELEMENT_REJECTS_TEXTNODE_APPENDING) {
+      // Scripts are not evaluated when updating a SCRIPT element.
       element.text = content;
       return element;
     }
-
+    
     if (ANY_INNERHTML_BUGGY) {
       if (tagName in INSERTION_TRANSLATIONS.tags) {
         while (element.firstChild)
           element.removeChild(element.firstChild);
-
-        var nodes = getContentFromAnonymousElement(tagName, content.stripScripts());
+        
+        var nodes = getContentFromAnonymousElement(tagName, content.stripScripts());        
         for (var i = 0, node; node = nodes[i]; i++)
           element.appendChild(node);
-
+        
       } else if (LINK_ELEMENT_INNERHTML_BUGGY && Object.isString(content) && content.indexOf('<link') > -1) {
+        // IE barfs when inserting a string that beings with a LINK
+        // element. The workaround is to add any content to the beginning
+        // of the string; we'll be inserting a text node (see
+        // getContentFromAnonymousElement below).
         while (element.firstChild)
           element.removeChild(element.firstChild);
-
+          
         var nodes = getContentFromAnonymousElement(tagName,
          content.stripScripts(), true);
-
+        
         for (var i = 0, node; node = nodes[i]; i++)
           element.appendChild(node);
       } else {
@@ -2282,16 +2433,16 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     } else {
       element.innerHTML = content.stripScripts();
     }
-
+    
     content.evalScripts.bind(content).defer();
     return element;
   }
-
+  
   function replace(element, content) {
     element = $(element);
-
+    
     if (content && content.toElement) {
-      content = content.toElement();
+      content = content.toElement();      
     } else if (!Object.isElement(content)) {
       content = Object.toHTML(content);
       var range = element.ownerDocument.createRange();
@@ -2299,11 +2450,11 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       content.evalScripts.bind(content).defer();
       content = range.createContextualFragment(content.stripScripts());
     }
-
+      
     element.parentNode.replaceChild(content, element);
     return element;
   }
-
+  
   var INSERTION_TRANSLATIONS = {
     before: function(element, node) {
       element.parentNode.insertBefore(node, element);
@@ -2317,7 +2468,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     after: function(element, node) {
       element.parentNode.insertBefore(node, element.nextSibling);
     },
-
+    
     tags: {
       TABLE:  ['<table>',                '</table>',                   1],
       TBODY:  ['<table><tbody>',         '</tbody></table>',           2],
@@ -2326,15 +2477,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       SELECT: ['<select>',               '</select>',                  1]
     }
   };
-
+  
   var tags = INSERTION_TRANSLATIONS.tags;
-
+  
   Object.extend(tags, {
     THEAD: tags.TBODY,
     TFOOT: tags.TBODY,
     TH:    tags.TD
   });
-
+  
   function replace_IE(element, content) {
     element = $(element);
     if (content && content.toElement)
@@ -2343,104 +2494,112 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       element.parentNode.replaceChild(content, element);
       return element;
     }
-
+    
     content = Object.toHTML(content);
     var parent = element.parentNode, tagName = parent.tagName.toUpperCase();
-
+    
     if (tagName in INSERTION_TRANSLATIONS.tags) {
       var nextSibling = Element.next(element);
       var fragments = getContentFromAnonymousElement(
        tagName, content.stripScripts());
-
+      
       parent.removeChild(element);
-
+      
       var iterator;
       if (nextSibling)
         iterator = function(node) { parent.insertBefore(node, nextSibling) };
       else
         iterator = function(node) { parent.appendChild(node); }
-
+        
       fragments.each(iterator);
     } else {
+      // We don't need to special-case this one.
       element.outerHTML = content.stripScripts();
     }
-
+    
     content.evalScripts.bind(content).defer();
     return element;
   }
-
+  
   if ('outerHTML' in document.documentElement)
     replace = replace_IE;
-
+  
   function isContent(content) {
     if (Object.isUndefined(content) || content === null) return false;
-
+    
     if (Object.isString(content) || Object.isNumber(content)) return true;
-    if (Object.isElement(content)) return true;
+    if (Object.isElement(content)) return true;    
     if (content.toElement || content.toHTML) return true;
-
+    
     return false;
   }
-
+  
+  // This private method does the bulk of the work for Element#insert. The
+  // actual insert method handles argument normalization and multiple
+  // content insertions.
   function insertContentAt(element, content, position) {
     position   = position.toLowerCase();
     var method = INSERTION_TRANSLATIONS[position];
-
+    
     if (content && content.toElement) content = content.toElement();
     if (Object.isElement(content)) {
       method(element, content);
       return element;
     }
-
-    content = Object.toHTML(content);
+    
+    content = Object.toHTML(content);      
     var tagName = ((position === 'before' || position === 'after') ?
      element.parentNode : element).tagName.toUpperCase();
-
+    
     var childNodes = getContentFromAnonymousElement(tagName, content.stripScripts());
-
+    
     if (position === 'top' || position === 'after') childNodes.reverse();
-
+    
     for (var i = 0, node; node = childNodes[i]; i++)
       method(element, node);
-
-    content.evalScripts.bind(content).defer();
+      
+    content.evalScripts.bind(content).defer();    
   }
 
   function insert(element, insertions) {
     element = $(element);
-
+    
     if (isContent(insertions))
       insertions = { bottom: insertions };
-
+      
     for (var position in insertions)
       insertContentAt(element, insertions[position], position);
-
-    return element;
+    
+    return element;    
   }
-
+  
   function wrap(element, wrapper, attributes) {
     element = $(element);
-
+    
     if (Object.isElement(wrapper)) {
-      $(wrapper).writeAttribute(attributes || {});
+      // The wrapper argument is a DOM node.
+      $(wrapper).writeAttribute(attributes || {});      
     } else if (Object.isString(wrapper)) {
+      // The wrapper argument is a string representing a tag name.
       wrapper = new Element(wrapper, attributes);
     } else {
+      // No wrapper was specified, which means the second argument is a set
+      // of attributes.
       wrapper = new Element('div', wrapper);
     }
-
+    
     if (element.parentNode)
       element.parentNode.replaceChild(wrapper, element);
-
+    
     wrapper.appendChild(element);
-
+    
     return wrapper;
   }
-
+  
   function cleanWhitespace(element) {
     element = $(element);
     var node = element.firstChild;
-
+    
     while (node) {
       var nextNode = node.nextSibling;
       if (node.nodeType === Node.TEXT_NODE && !/\S/.test(node.nodeValue))
@@ -2449,20 +2608,24 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     }
     return element;
   }
-
+  
   function empty(element) {
     return $(element).innerHTML.blank();
   }
-
+  
+  // In older versions of Internet Explorer, certain elements don't like
+  // having innerHTML set on them — including SELECT and most table-related
+  // tags. So we wrap the string with enclosing HTML (if necessary), stick it
+  // in a DIV, then grab the DOM nodes.
   function getContentFromAnonymousElement(tagName, html, force) {
     var t = INSERTION_TRANSLATIONS.tags[tagName], div = DIV;
-
+    
     var workaround = !!t;
     if (!workaround && force) {
       workaround = true;
       t = ['', '', 0];
     }
-
+    
     if (workaround) {
       div.innerHTML = '&#160;' + t[0] + html + t[1];
       div.removeChild(div.firstChild);
@@ -2471,10 +2634,11 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     } else {
       div.innerHTML = html;
     }
-
+    
     return $A(div.childNodes);
+    //return SLICE.call(div.childNodes, 0);
   }
-
+  
   function clone(element, deep) {
     if (!(element = $(element))) return;
     var clone = element.cloneNode(deep);
@@ -2489,7 +2653,8 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     }
     return Element.extend(clone);
   }
-
+  
+  // Performs cleanup on a single element before it is removed from the page.
   function purgeElement(element) {
     var uid = getUniqueElementID(element);
     if (uid) {
@@ -2499,13 +2664,13 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       delete Element.Storage[uid];
     }
   }
-
+  
   function purgeCollection(elements) {
     var i = elements.length;
     while (i--)
       purgeElement(elements[i]);
   }
-
+  
   function purgeCollection_IE(elements) {
     var i = elements.length, element, uid;
     while (i--) {
@@ -2515,24 +2680,24 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       delete Event.cache[uid];
     }
   }
-
+  
   if (HAS_UNIQUE_ID_PROPERTY) {
     purgeCollection = purgeCollection_IE;
   }
-
-
+  
+  
   function purge(element) {
     if (!(element = $(element))) return;
     purgeElement(element);
-
+    
     var descendants = element.getElementsByTagName('*'),
      i = descendants.length;
-
+     
     while (i--) purgeElement(descendants[i]);
-
+    
     return null;
   }
-
+  
   Object.extend(methods, {
     remove:  remove,
     update:  update,
@@ -2544,33 +2709,34 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     clone:   clone,
     purge:   purge
   });
+  
 
-
-
+  // TRAVERSAL
+  
   function recursivelyCollect(element, property, maximumLength) {
     element = $(element);
     maximumLength = maximumLength || -1;
     var elements = [];
-
+    
     while (element = element[property]) {
       if (element.nodeType === Node.ELEMENT_NODE)
         elements.push(Element.extend(element));
-
+        
       if (elements.length === maximumLength) break;
     }
-
-    return elements;
+    
+    return elements;    
   }
-
+  
 
   function ancestors(element) {
     return recursivelyCollect(element, 'parentNode');
   }
-
+  
   function descendants(element) {
     return Element.select(element, '*');
   }
-
+  
   function firstDescendant(element) {
     element = $(element).firstChild;
     while (element && element.nodeType !== Node.ELEMENT_NODE)
@@ -2578,62 +2744,70 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
     return $(element);
   }
-
+  
   function immediateDescendants(element) {
     var results = [], child = $(element).firstChild;
-
+    
     while (child) {
       if (child.nodeType === Node.ELEMENT_NODE)
         results.push(Element.extend(child));
-
+      
       child = child.nextSibling;
     }
-
+    
     return results;
   }
-
+  
   function previousSiblings(element) {
     return recursivelyCollect(element, 'previousSibling');
   }
-
+  
   function nextSiblings(element) {
     return recursivelyCollect(element, 'nextSibling');
   }
-
+  
   function siblings(element) {
-    element = $(element);
+    element = $(element);    
     var previous = previousSiblings(element),
      next = nextSiblings(element);
     return previous.reverse().concat(next);
   }
-
+  
   function match(element, selector) {
     element = $(element);
-
+    
+    // If selector is a string, we assume it's a CSS selector.
     if (Object.isString(selector))
       return Prototype.Selector.match(element, selector);
-
+      
+    // Otherwise, we assume it's an object with its own `match` method.
     return selector.match(element);
   }
-
-
+  
+  
+  // Internal method for optimizing traversal. Works like 
+  // `recursivelyCollect`, except it stops at the first match and doesn't
+  // extend any elements except for the returned element.
   function _recursivelyFind(element, property, expression, index) {
     element = $(element), expression = expression || 0, index = index || 0;
     if (Object.isNumber(expression)) {
       index = expression, expression = null;
     }
-
+    
     while (element = element[property]) {
+      // Skip any non-element nodes.
       if (element.nodeType !== 1) continue;
+      // Skip any nodes that don't match the expression, if there is one.
       if (expression && !Prototype.Selector.match(element, expression))
         continue;
+      // Skip the first `index` matches we find.
       if (--index >= 0) continue;
-
+      
       return Element.extend(element);
     }
   }
-
-
+  
+  
   function up(element, expression, index) {
     element = $(element);
 
@@ -2644,10 +2818,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function down(element, expression, index) {
     if (arguments.length === 1) return firstDescendant(element);
     element = $(element), expression = expression || 0, index = index || 0;
-
+    
     if (Object.isNumber(expression))
       index = expression, expression = '*';
-
+    
     var node = Prototype.Selector.select(expression, element)[index];
     return Element.extend(node);
   }
@@ -2655,11 +2829,11 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function previous(element, expression, index) {
     return _recursivelyFind(element, 'previousSibling', expression, index);
   }
-
+  
   function next(element, expression, index) {
     return _recursivelyFind(element, 'nextSibling', expression, index);
   }
-
+    
   function select(element) {
     element = $(element);
     var expressions = SLICE.call(arguments, 1).join(', ');
@@ -2674,28 +2848,29 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       if (Prototype.Selector.match(sibling, expressions))
         results.push(sibling);
     }
-
+    
     return results;
   }
-
+  
   function descendantOf_DOM(element, ancestor) {
     element = $(element), ancestor = $(ancestor);
     while (element = element.parentNode)
       if (element === ancestor) return true;
     return false;
   }
-
+  
   function descendantOf_contains(element, ancestor) {
     element = $(element), ancestor = $(ancestor);
+    // Some nodes, like `document`, don't have the "contains" method.
     if (!ancestor.contains) return descendantOf_DOM(element, ancestor);
     return ancestor.contains(element) && ancestor !== element;
   }
-
+  
   function descendantOf_compareDocumentPosition(element, ancestor) {
     element = $(element), ancestor = $(ancestor);
     return (element.compareDocumentPosition(ancestor) & 8) === 8;
   }
-
+  
   var descendantOf;
   if (DIV.compareDocumentPosition) {
     descendantOf = descendantOf_compareDocumentPosition;
@@ -2704,8 +2879,8 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   } else {
     descendantOf = descendantOf_DOM;
   }
-
-
+  
+  
   Object.extend(methods, {
     recursivelyCollect:   recursivelyCollect,
     ancestors:            ancestors,
@@ -2723,77 +2898,89 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     select:               select,
     adjacent:             adjacent,
     descendantOf:         descendantOf,
-
+    
+    // ALIASES
     getElementsBySelector: select,
-
+    
     childElements:         immediateDescendants
   });
-
-
+  
+  
+  // ATTRIBUTES
   var idCounter = 1;
   function identify(element) {
     element = $(element);
     var id = Element.readAttribute(element, 'id');
     if (id) return id;
-
+    
+    // The element doesn't have an ID of its own. Give it one, first ensuring
+    // that it's unique.
     do { id = 'anonymous_element_' + idCounter++ } while ($(id));
-
+    
     Element.writeAttribute(element, 'id', id);
     return id;
   }
-
+  
 
   function readAttribute(element, name) {
     return $(element).getAttribute(name);
   }
-
+  
   function readAttribute_IE(element, name) {
     element = $(element);
-
+    
+    // If the attribute name exists in the value translation table, it means
+    // we should use a custom method for retrieving that attribute's value.
     var table = ATTRIBUTE_TRANSLATIONS.read;
     if (table.values[name])
       return table.values[name](element, name);
-
+      
+    // If it exists in the name translation table, it means the attribute has
+    // an alias.
     if (table.names[name]) name = table.names[name];
-
+    
+    // Special-case namespaced attributes.
     if (name.include(':')) {
       if (!element.attributes || !element.attributes[name]) return null;
       return element.attributes[name].value;
     }
-
+    
     return element.getAttribute(name);
   }
-
+  
   function readAttribute_Opera(element, name) {
     if (name === 'title') return element.title;
     return element.getAttribute(name);
   }
-
+  
   var PROBLEMATIC_ATTRIBUTE_READING = (function() {
+    // This test used to set 'onclick' to `Prototype.emptyFunction`, but that
+    // caused an (uncatchable) error in IE 10. For some reason, switching to
+    // an empty array prevents this issue.
     DIV.setAttribute('onclick', []);
     var value = DIV.getAttribute('onclick');
     var isFunction = Object.isArray(value);
     DIV.removeAttribute('onclick');
     return isFunction;
   })();
-
+  
   if (PROBLEMATIC_ATTRIBUTE_READING) {
     readAttribute = readAttribute_IE;
   } else if (Prototype.Browser.Opera) {
     readAttribute = readAttribute_Opera;
   }
-
-
+  
+  
   function writeAttribute(element, name, value) {
     element = $(element);
     var attributes = {}, table = ATTRIBUTE_TRANSLATIONS.write;
-
+    
     if (typeof name === 'object') {
       attributes = name;
     } else {
       attributes[name] = Object.isUndefined(value) ? true : value;
     }
-
+    
     for (var attr in attributes) {
       name = table.names[attr] || attr;
       value = attributes[attr];
@@ -2808,78 +2995,83 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
     return element;
   }
-
+  
   function hasAttribute(element, attribute) {
     attribute = ATTRIBUTE_TRANSLATIONS.has[attribute] || attribute;
     var node = $(element).getAttributeNode(attribute);
     return !!(node && node.specified);
   }
-
+  
   GLOBAL.Element.Methods.Simulated.hasAttribute = hasAttribute;
-
+  
   function classNames(element) {
     return new Element.ClassNames(element);
   }
-
+  
   var regExpCache = {};
   function getRegExpForClassName(className) {
     if (regExpCache[className]) return regExpCache[className];
-
+    
     var re = new RegExp("(^|\\s+)" + className + "(\\s+|$)");
     regExpCache[className] = re;
     return re;
   }
-
+  
   function hasClassName(element, className) {
     if (!(element = $(element))) return;
-
+    
     var elementClassName = element.className;
 
+    // We test these common cases first because we'd like to avoid creating
+    // the regular expression, if possible.
     if (elementClassName.length === 0) return false;
     if (elementClassName === className) return true;
-
+    
     return getRegExpForClassName(className).test(elementClassName);
   }
-
+  
   function addClassName(element, className) {
     if (!(element = $(element))) return;
-
+    
     if (!hasClassName(element, className))
       element.className += (element.className ? ' ' : '') + className;
-
+      
     return element;
   }
-
+  
   function removeClassName(element, className) {
     if (!(element = $(element))) return;
-
+    
     element.className = element.className.replace(
      getRegExpForClassName(className), ' ').strip();
-
+     
     return element;
   }
-
+  
   function toggleClassName(element, className, bool) {
     if (!(element = $(element))) return;
-
+    
     if (Object.isUndefined(bool))
       bool = !hasClassName(element, className);
-
+      
     var method = Element[bool ? 'addClassName' : 'removeClassName'];
     return method(element, className);
   }
-
+  
   var ATTRIBUTE_TRANSLATIONS = {};
-
+  
+  // Test attributes.
   var classProp = 'className', forProp = 'for';
-
+  
+  // Try "className" first (IE <8)
   DIV.setAttribute(classProp, 'x');
   if (DIV.className !== 'x') {
+    // Try "class" (IE >=8)
     DIV.setAttribute('class', 'x');
     if (DIV.className === 'x')
       classProp = 'class';
   }
-
+  
   var LABEL = document.createElement('label');
   LABEL.setAttribute(forProp, 'x');
   if (LABEL.htmlFor !== 'x') {
@@ -2888,30 +3080,33 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       forProp = 'htmlFor';
   }
   LABEL = null;
-
+  
   function _getAttr(element, attribute) {
     return element.getAttribute(attribute);
   }
-
+  
   function _getAttr2(element, attribute) {
     return element.getAttribute(attribute, 2);
   }
-
+  
   function _getAttrNode(element, attribute) {
     var node = element.getAttributeNode(attribute);
     return node ? node.value : '';
   }
-
+  
   function _getFlag(element, attribute) {
     return $(element).hasAttribute(attribute) ? attribute : null;
   }
-
+  
+  // Test whether attributes like `onclick` have their values serialized.
   DIV.onclick = Prototype.emptyFunction;
   var onclickValue = DIV.getAttribute('onclick');
-
+  
   var _getEv;
-
+  
+  // IE <8
   if (String(onclickValue).indexOf('{') > -1) {
+    // intrinsic event attributes are serialized as `function { ... }`
     _getEv = function(element, attribute) {
       var value = element.getAttribute(attribute);
       if (!value) return null;
@@ -2920,15 +3115,17 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       value = value.split('}')[0];
       return value.strip();
     };
-  }
+  } 
+  // IE >=8
   else if (onclickValue === '') {
+    // only function body is serialized
     _getEv = function(element, attribute) {
       var value = element.getAttribute(attribute);
       if (!value) return null;
       return value.strip();
     };
   }
-
+  
   ATTRIBUTE_TRANSLATIONS.read = {
     names: {
       'class':     classProp,
@@ -2936,7 +3133,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       'for':       forProp,
       'htmlFor':   forProp
     },
-
+        
     values: {
       style: function(element) {
         return element.style.cssText.toLowerCase();
@@ -2946,7 +3143,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       }
     }
   };
-
+  
   ATTRIBUTE_TRANSLATIONS.write = {
     names: {
       className:   'class',
@@ -2954,31 +3151,32 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       cellpadding: 'cellPadding',
       cellspacing: 'cellSpacing'
     },
-
+    
     values: {
       checked: function(element, value) {
         element.checked = !!value;
       },
-
+      
       style: function(element, value) {
         element.style.cssText = value ? value : '';
       }
     }
   };
-
+  
   ATTRIBUTE_TRANSLATIONS.has = { names: {} };
-
+  
   Object.extend(ATTRIBUTE_TRANSLATIONS.write.names,
    ATTRIBUTE_TRANSLATIONS.read.names);
-
+   
   var CAMEL_CASED_ATTRIBUTE_NAMES = $w('colSpan rowSpan vAlign dateTime ' +
    'accessKey tabIndex encType maxLength readOnly longDesc frameBorder');
-
+   
   for (var i = 0, attr; attr = CAMEL_CASED_ATTRIBUTE_NAMES[i]; i++) {
     ATTRIBUTE_TRANSLATIONS.write.names[attr.toLowerCase()] = attr;
     ATTRIBUTE_TRANSLATIONS.has.names[attr.toLowerCase()]   = attr;
   }
-
+  
+  // The rest of the oddballs.
   Object.extend(ATTRIBUTE_TRANSLATIONS.read.values, {
     href:        _getAttr2,
     src:         _getAttr2,
@@ -3005,10 +3203,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     onsubmit:    _getEv,
     onreset:     _getEv,
     onselect:    _getEv,
-    onchange:    _getEv
+    onchange:    _getEv    
   });
-
-
+  
+  
   Object.extend(methods, {
     identify:        identify,
     readAttribute:   readAttribute,
@@ -3019,14 +3217,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     removeClassName: removeClassName,
     toggleClassName: toggleClassName
   });
-
-
+  
+  
+  // STYLES
   function normalizeStyleName(style) {
     if (style === 'float' || style === 'styleFloat')
       return 'cssFloat';
     return style.camelize();
   }
-
+  
   function normalizeStyleName_IE(style) {
     if (style === 'float' || style === 'cssFloat')
       return 'styleFloat';
@@ -3036,8 +3235,9 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function setStyle(element, styles) {
     element = $(element);
     var elementStyle = element.style, match;
-
+    
     if (Object.isString(styles)) {
+      // Set the element's CSS text directly.
       elementStyle.cssText += ';' + styles;
       if (styles.include('opacity')) {
         var opacity = styles.match(/opacity:\s*(\d?\.?\d*)/)[1];
@@ -3045,23 +3245,25 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       }
       return element;
     }
-
+    
     for (var property in styles) {
       if (property === 'opacity') {
         Element.setOpacity(element, styles[property]);
       } else {
         var value = styles[property];
         if (property === 'float' || property === 'cssFloat') {
+          // Browsers disagree on whether this should be called `cssFloat`
+          // or `styleFloat`. Check both.
           property = Object.isUndefined(elementStyle.styleFloat) ?
            'cssFloat' : 'styleFloat';
         }
         elementStyle[property] = value;
       }
     }
-
-    return element;
+    
+    return element;    
   }
-
+  
 
   function getStyle(element, style) {
     if (style === 'opacity') return getOpacity(element);
@@ -3069,61 +3271,72 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     element = $(element);
     style = normalizeStyleName(style);
 
+    // Try inline styles first.
     var value = element.style[style];
     if (!value || value === 'auto') {
+      // Reluctantly retrieve the computed style.
       var css = document.defaultView.getComputedStyle(element, null);
       value = css ? css[style] : null;
     }
-
+    
     return value === 'auto' ? null : value;
   }
-
+  
   function getStyle_Opera(element, style) {
     switch (style) {
       case 'height': case 'width':
+        // returns '0px' for hidden elements; we want it to return null
         if (!Element.visible(element)) return null;
-
+        
+        // Certain versions of Opera return border-box dimensions instead of
+        // content-box dimensions, so we need to determine if we should
+        // subtract padding and borders from the value.
         var dim = parseInt(getStyle(element, style), 10);
-
+        
         if (dim !== element['offset' + style.capitalize()])
           return dim + 'px';
-
+       
         return Element.measure(element, style);
-
+        
       default: return getStyle(element, style);
     }
   }
-
+  
   function getStyle_IE(element, style) {
     if (style === 'opacity') return getOpacity_IE(element);
 
     element = $(element);
     style = normalizeStyleName_IE(style);
 
-    var value = element.style[style];
+    // Try inline styles first.
+    var value = element.style[style];    
     if (!value && element.currentStyle) {
+      // Reluctantly retrieve the current style.
       value = element.currentStyle[style];
     }
-
+    
     if (value === 'auto') {
+      // If we need a dimension, return null for hidden elements, but return
+      // pixel values for visible elements.
       if ((style === 'width' || style === 'height') && Element.visible(element))
         return Element.measure(element, style) + 'px';
       return null;
     }
-
-    return value;
+    
+    return value;    
   }
-
+  
   function stripAlphaFromFilter_IE(filter) {
     return (filter || '').replace(/alpha\([^\)]*\)/gi, '');
   }
-
+  
   function hasLayout_IE(element) {
     if (!element.currentStyle || !element.currentStyle.hasLayout)
       element.style.zoom = 1;
     return element;
   }
 
+  // Opacity feature test borrowed from Modernizr.
   var STANDARD_CSS_OPACITY_SUPPORTED = (function() {
     DIV.style.cssText = "opacity:.55";
     return /^0.55/.test(DIV.style.opacity);
@@ -3132,11 +3345,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function setOpacity(element, value) {
     element = $(element);
     if (value == 1 || value === '') value = '';
-    else if (value < 0.00001) value = 0;
-    element.style.opacity = value;
+    else if (value < 0.00001) value = 0;    
+    element.style.opacity = value;    
     return element;
   }
-
+  
+  // The IE versions of `setOpacity` and `getOpacity` are aware of both
+  // the standard approach (an `opacity` property in CSS) and the old-style
+  // IE approach (a proprietary `filter` property). They are written to
+  // prefer the standard approach unless it isn't supported.
   var setOpacity_IE = STANDARD_CSS_OPACITY_SUPPORTED ? setOpacity : function(element, value) {
     element = $(element);
     var style = element.style;
@@ -3144,33 +3361,39 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       style.zoom = 1;
 
     var filter = Element.getStyle(element, 'filter');
-
+     
     if (value == 1 || value === '') {
+      // Remove the `alpha` filter from IE's `filter` CSS property. If there
+      // is anything left after removal, put it back where it was; otherwise
+      // remove the property.
       filter = stripAlphaFromFilter_IE(filter);
       if (filter) style.filter = filter;
-      else style.removeAttribute('filter');
+      else style.removeAttribute('filter');      
       return element;
     }
-
+    
     if (value < 0.00001) value = 0;
-
-    style.filter = stripAlphaFromFilter_IE(filter) +
+        
+    style.filter = stripAlphaFromFilter_IE(filter) + 
      ' alpha(opacity=' + (value * 100) + ')';
-
+     
     return element;
   };
-
-
+  
+  
   function getOpacity(element) {
     element = $(element);
+    // Try inline styles first.
     var value = element.style.opacity;
     if (!value || value === 'auto') {
+      // Reluctantly retrieve the computed style.
       var css = document.defaultView.getComputedStyle(element, null);
       value = css ? css.opacity : null;
     }
     return value ? parseFloat(value) : 1.0;
   }
-
+  
+  // Prefer the standard CSS approach unless it's not supported.
   var getOpacity_IE = STANDARD_CSS_OPACITY_SUPPORTED ? getOpacity : function(element) {
     var filter = Element.getStyle(element, 'filter');
     if (filter.length === 0) return 1.0;
@@ -3178,8 +3401,8 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     if (match && match[1]) return parseFloat(match[1]) / 100;
     return 1.0;
   };
-
-
+  
+  
   Object.extend(methods, {
     setStyle:   setStyle,
     getStyle:   getStyle,
@@ -3188,86 +3411,98 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   });
 
   if (Prototype.Browser.Opera) {
+    // Opera also has 'styleFloat' in DIV.style
     methods.getStyle = getStyle_Opera;
   } else if ('styleFloat' in DIV.style) {
     methods.getStyle = getStyle_IE;
     methods.setOpacity = setOpacity_IE;
     methods.getOpacity = getOpacity_IE;
   }
-
+  
+  // STORAGE
   var UID = 0;
-
+  
   GLOBAL.Element.Storage = { UID: 1 };
-
+  
   function getUniqueElementID(element) {
     if (element === window) return 0;
 
+    // Need to use actual `typeof` operator to prevent errors in some
+    // environments when accessing node expandos.
     if (typeof element._prototypeUID === 'undefined')
       element._prototypeUID = Element.Storage.UID++;
     return element._prototypeUID;
   }
-
+  
+  // In Internet Explorer, DOM nodes have a `uniqueID` property. Saves us
+  // from inventing our own.
   function getUniqueElementID_IE(element) {
     if (element === window) return 0;
+    // The document object's `uniqueID` property changes each time you read it.
     if (element == document) return 1;
     return element.uniqueID;
   }
-
+  
   var HAS_UNIQUE_ID_PROPERTY = ('uniqueID' in DIV);
   if (HAS_UNIQUE_ID_PROPERTY)
     getUniqueElementID = getUniqueElementID_IE;
-
+  
   function getStorage(element) {
     if (!(element = $(element))) return;
-
+    
     var uid = getUniqueElementID(element);
-
+    
     if (!Element.Storage[uid])
       Element.Storage[uid] = $H();
-
+      
     return Element.Storage[uid];
   }
-
+  
   function store(element, key, value) {
     if (!(element = $(element))) return;
     var storage = getStorage(element);
     if (arguments.length === 2) {
+      // Assume we've been passed an object full of key/value pairs.
       storage.update(key);
     } else {
       storage.set(key, value);
     }
     return element;
   }
-
+  
   function retrieve(element, key, defaultValue) {
     if (!(element = $(element))) return;
     var storage = getStorage(element), value = storage.get(key);
-
+    
     if (Object.isUndefined(value)) {
       storage.set(key, defaultValue);
       value = defaultValue;
     }
-
+    
     return value;
   }
-
-
+  
+  
   Object.extend(methods, {
     getStorage: getStorage,
     store:      store,
     retrieve:   retrieve
   });
-
-
+  
+  
+  // ELEMENT EXTENSION
   var Methods = {}, ByTag = Element.Methods.ByTag,
    F = Prototype.BrowserFeatures;
-
+  
+  // Handle environments which support extending element prototypes
+  // but don't expose the standard class name.
   if (!F.ElementExtensions && ('__proto__' in DIV)) {
     GLOBAL.HTMLElement = {};
     GLOBAL.HTMLElement.prototype = DIV['__proto__'];
     F.ElementExtensions = true;
   }
-
+  
+  // Certain oddball element types can't be extended in IE8.
   function checkElementPrototypeDeficiency(tagName) {
     if (typeof window.Element === 'undefined') return false;
     var proto = window.Element.prototype;
@@ -3280,13 +3515,13 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       el = null;
       return isBuggy;
     }
-
-    return false;
+    
+    return false;    
   }
-
-  var HTMLOBJECTELEMENT_PROTOTYPE_BUGGY =
+  
+  var HTMLOBJECTELEMENT_PROTOTYPE_BUGGY = 
    checkElementPrototypeDeficiency('object');
-
+  
   function extendElementWith(element, methods) {
     for (var property in methods) {
       var value = methods[property];
@@ -3294,51 +3529,58 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         element[property] = value.methodize();
     }
   }
-
+  
+  // Keeps track of the UIDs of extended elements.
   var EXTENDED = {};
   function elementIsExtended(element) {
     var uid = getUniqueElementID(element);
     return (uid in EXTENDED);
   }
-
+  
   function extend(element) {
     if (!element || elementIsExtended(element)) return element;
     if (element.nodeType !== Node.ELEMENT_NODE || element == window)
       return element;
-
+      
     var methods = Object.clone(Methods),
      tagName = element.tagName.toUpperCase();
-
+     
+    // Add methods for specific tags.
     if (ByTag[tagName]) Object.extend(methods, ByTag[tagName]);
-
+    
     extendElementWith(element, methods);
     EXTENDED[getUniqueElementID(element)] = true;
     return element;
   }
-
+  
+  // Because of the deficiency mentioned above, IE8 needs a very thin version
+  // of Element.extend that acts like Prototype.K _except_ when the element
+  // is one of the problematic types.
   function extend_IE8(element) {
     if (!element || elementIsExtended(element)) return element;
-
+    
     var t = element.tagName;
     if (t && (/^(?:object|applet|embed)$/i.test(t))) {
       extendElementWith(element, Element.Methods);
       extendElementWith(element, Element.Methods.Simulated);
       extendElementWith(element, Element.Methods.ByTag[t.toUpperCase()]);
     }
-
+    
     return element;
   }
 
+  // If the browser lets us extend specific elements, we can replace `extend`
+  // with a thinner version (or, ideally, an empty version).
   if (F.SpecificElementExtensions) {
     extend = HTMLOBJECTELEMENT_PROTOTYPE_BUGGY ? extend_IE8 : Prototype.K;
   }
-
+  
   function addMethodsToTagName(tagName, methods) {
     tagName = tagName.toUpperCase();
     if (!ByTag[tagName]) ByTag[tagName] = {};
     Object.extend(ByTag[tagName], methods);
   }
-
+  
   function mergeMethods(destination, methods, onlyIfAbsent) {
     if (Object.isUndefined(onlyIfAbsent)) onlyIfAbsent = false;
     for (var property in methods) {
@@ -3348,7 +3590,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         destination[property] = value.methodize();
     }
   }
-
+  
   function findDOMClass(tagName) {
     var klass;
     var trans = {
@@ -3371,19 +3613,20 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
     var element = document.createElement(tagName),
      proto = element['__proto__'] || element.constructor.prototype;
-
+        
     element = null;
     return proto;
   }
-
+  
   function addMethods(methods) {
     if (arguments.length === 0) addFormMethods();
-
+    
     if (arguments.length === 2) {
+      // Tag names have been specified.
       var tagName = methods;
       methods = arguments[1];
     }
-
+    
     if (!tagName) {
       Object.extend(Element.Methods, methods || {});
     } else {
@@ -3394,15 +3637,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         addMethodsToTagName(tagName, methods);
       }
     }
-
+    
     var ELEMENT_PROTOTYPE = window.HTMLElement ? HTMLElement.prototype :
      Element.prototype;
-
+     
     if (F.ElementExtensions) {
       mergeMethods(ELEMENT_PROTOTYPE, Element.Methods);
       mergeMethods(ELEMENT_PROTOTYPE, Element.Methods.Simulated, true);
     }
-
+    
     if (F.SpecificElementExtensions) {
       for (var tag in Element.Methods.ByTag) {
         var klass = findDOMClass(tag);
@@ -3410,22 +3653,24 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         mergeMethods(klass.prototype, ByTag[tag]);
       }
     }
-
+    
     Object.extend(Element, Element.Methods);
     Object.extend(Element, Element.Methods.Simulated);
     delete Element.ByTag;
     delete Element.Simulated;
-
+    
     Element.extend.refresh();
-
+    
+    // We need to replace the element creation cache because the nodes in the
+    // cache now have stale versions of the element methods.
     ELEMENT_CACHE = {};
   }
-
+  
   Object.extend(GLOBAL.Element, {
     extend:     extend,
     addMethods: addMethods
   });
-
+  
   if (extend === Prototype.K) {
     GLOBAL.Element.extend.refresh = Prototype.emptyFunction;
   } else {
@@ -3434,11 +3679,13 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       Object.extend(Methods, Element.Methods);
       Object.extend(Methods, Element.Methods.Simulated);
 
+      // All existing extended elements are stale and need to be refreshed.
       EXTENDED = {};
     };
   }
-
+  
   function addFormMethods() {
+    // Add relevant element methods from the forms API.
     Object.extend(Form, Form.Methods);
     Object.extend(Form.Element, Form.Element.Methods);
     Object.extend(Element.Methods.ByTag, {
@@ -3452,6 +3699,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
   Element.addMethods(methods);
 
+  // Prevent IE leaks on DIV and ELEMENT_CACHE
   function destroyCache_IE() {
     DIV = null;
     ELEMENT_CACHE = null;
@@ -3462,50 +3710,71 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
 })(this);
 (function() {
-
+  
+  // Converts a CSS percentage value to a decimal.
+  // Ex: toDecimal("30%"); // -> 0.3
   function toDecimal(pctString) {
     var match = pctString.match(/^(\d+)%?$/i);
     if (!match) return null;
     return (Number(match[1]) / 100);
   }
-
+  
+  // A bare-bones version of Element.getStyle. Needed because getStyle is
+  // public-facing and too user-friendly for our tastes. We need raw,
+  // non-normalized values.
+  //
+  // Camel-cased property names only.
   function getRawStyle(element, style) {
     element = $(element);
 
+    // Try inline styles first.
     var value = element.style[style];
     if (!value || value === 'auto') {
+      // Reluctantly retrieve the computed style.
       var css = document.defaultView.getComputedStyle(element, null);
       value = css ? css[style] : null;
     }
-
+    
     if (style === 'opacity') return value ? parseFloat(value) : 1.0;
     return value === 'auto' ? null : value;
   }
-
+  
   function getRawStyle_IE(element, style) {
-    var value = element.style[style];
+    // Try inline styles first.
+    var value = element.style[style];    
     if (!value && element.currentStyle) {
+      // Reluctantly retrieve the current style.
       value = element.currentStyle[style];
     }
     return value;
   }
-
+  
+  // Quickly figures out the content width of an element. Used instead of
+  // `element.measure('width')` in several places below; we don't want to 
+  // call back into layout code recursively if we don't have to.
+  //
+  // But this means it doesn't handle edge cases. Use it when you know the
+  // element in question is visible and will give accurate measurements.
   function getContentWidth(element, context) {
     var boxWidth = element.offsetWidth;
-
+    
     var bl = getPixelValue(element, 'borderLeftWidth',  context) || 0;
     var br = getPixelValue(element, 'borderRightWidth', context) || 0;
     var pl = getPixelValue(element, 'paddingLeft',      context) || 0;
     var pr = getPixelValue(element, 'paddingRight',     context) || 0;
-
+    
     return boxWidth - bl - br - pl - pr;
   }
-
+  
   if ('currentStyle' in document.documentElement) {
     getRawStyle = getRawStyle_IE;
   }
-
-
+  
+  
+  // Can be called like this:
+  //   getPixelValue("11px");
+  // Or like this:
+  //   getPixelValue(someElement, 'paddingTop');  
   function getPixelValue(value, property, context) {
     var element = null;
     if (Object.isElement(value)) {
@@ -3516,34 +3785,50 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     if (value === null || Object.isUndefined(value)) {
       return null;
     }
-
+    
+    // Non-IE browsers will always return pixels if possible.
+    // (We use parseFloat instead of parseInt because Firefox can return
+    // non-integer pixel values.)
     if ((/^(?:-)?\d+(\.\d+)?(px)?$/i).test(value)) {
       return window.parseFloat(value);
     }
 
     var isPercentage = value.include('%'), isViewport = (context === document.viewport);
-
+    
+    // When IE gives us something other than a pixel value, this technique
+    // (invented by Dean Edwards) will convert it to pixels.
+    //
+    // (This doesn't work for percentage values on elements with `position: fixed`
+    // because those percentages are relative to the viewport.)
     if (/\d/.test(value) && element && element.runtimeStyle && !(isPercentage && isViewport)) {
-      var style = element.style.left, rStyle = element.runtimeStyle.left;
+      var style = element.style.left, rStyle = element.runtimeStyle.left; 
       element.runtimeStyle.left = element.currentStyle.left;
-      element.style.left = value || 0;
+      element.style.left = value || 0;  
       value = element.style.pixelLeft;
       element.style.left = style;
       element.runtimeStyle.left = rStyle;
-
+      
       return value;
     }
 
+    // For other browsers, we have to do a bit of work.
+    // (At this point, only percentages should be left; all other CSS units
+    // are converted to pixels by getComputedStyle.)
     if (element && isPercentage) {
+      // The `context` argument comes into play for percentage units; it's
+      // the thing that the unit represents a percentage of. When an
+      // absolutely-positioned element has a width of 50%, we know that's
+      // 50% of its offset parent. If it's `position: fixed` instead, we know
+      // it's 50% of the viewport. And so on.
       context = context || element.parentNode;
       var decimal = toDecimal(value), whole = null;
-
+      
       var isHorizontal = property.include('left') || property.include('right') ||
        property.include('width');
-
+       
       var isVertical   = property.include('top') || property.include('bottom') ||
         property.include('height');
-
+        
       if (context === document.viewport) {
         if (isHorizontal) {
           whole = document.viewport.getWidth();
@@ -3557,19 +3842,22 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
           whole = $(context).measure('height');
         }
       }
-
+      
       return (whole === null) ? 0 : whole * decimal;
     }
-
+    
+    // If we get this far, we should probably give up.
     return 0;
   }
-
+  
+  // Turns plain numbers into pixel measurements.
   function toCSSPixels(number) {
     if (Object.isString(number) && number.endsWith('px'))
       return number;
-    return number + 'px';
+    return number + 'px';    
   }
-
+  
+  // Shortcut for figuring out if an element is `display: none` or not.
   function isDisplayed(element) {
     while (element && element.parentNode) {
       var display = element.getStyle('display');
@@ -3580,8 +3868,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     }
     return true;
   }
-
-  var hasLayout = Prototype.K;
+  
+  // In IE6-7, positioned elements often need hasLayout triggered before they
+  // report accurate measurements.
+  var hasLayout = Prototype.K;  
   if ('currentStyle' in document.documentElement) {
     hasLayout = function(element) {
       if (!element.currentStyle.hasLayout) {
@@ -3591,20 +3881,26 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     };
   }
 
+  // Converts the layout hash property names back to the CSS equivalents.
+  // For now, only the border properties differ.
   function cssNameFor(key) {
     if (key.include('border')) key = key + '-width';
     return key.camelize();
   }
-
+  
   Element.Layout = Class.create(Hash, {
     initialize: function($super, element, preCompute) {
       $super();
       this.element = $(element);
-
+      
+      // nullify all properties keys
       Element.Layout.PROPERTIES.each( function(property) {
         this._set(property, null);
       }, this);
-
+      
+      // The 'preCompute' boolean tells us whether we should fetch all values
+      // at once. If so, we should do setup/teardown only once. We set a flag
+      // so that we can ignore calls to `_begin` and `_end` elsewhere.
       if (preCompute) {
         this._preComputing = true;
         this._begin();
@@ -3613,64 +3909,98 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         this._preComputing = false;
       }
     },
-
+    
     _set: function(property, value) {
       return Hash.prototype.set.call(this, property, value);
-    },
-
+    },    
+    
+    // TODO: Investigate.
     set: function(property, value) {
       throw "Properties of Element.Layout are read-only.";
     },
-
+    
     get: function($super, property) {
+      // Try to fetch from the cache.
       var value = $super(property);
       return value === null ? this._compute(property) : value;
     },
-
+    
+    // `_begin` and `_end` are two functions that are called internally 
+    // before and after any measurement is done. In certain conditions (e.g.,
+    // when hidden), elements need a "preparation" phase that ensures
+    // accuracy of measurements.
     _begin: function() {
       if (this._isPrepared()) return;
-
+      
       var element = this.element;
       if (isDisplayed(element)) {
         this._setPrepared(true);
         return;
       }
-
-
+      
+      // If we get this far, it means this element is hidden. To get usable
+      // measurements, we must remove `display: none`, but in a manner that 
+      // isn't noticeable to the user. That means we also set
+      // `visibility: hidden` to make it invisible, and `position: absolute`
+      // so that it won't alter the document flow when displayed.
+      //
+      // Once we do this, the element is "prepared," and we can make our
+      // measurements. When we're done, the `_end` method cleans up our
+      // changes.
+      
+      // Remember the original values for some styles we're going to alter.
       var originalStyles = {
         position:   element.style.position   || '',
         width:      element.style.width      || '',
         visibility: element.style.visibility || '',
         display:    element.style.display    || ''
       };
-
+      
+      // We store them so that the `_end` method can retrieve them later.
       element.store('prototype_original_styles', originalStyles);
-
+      
       var position = getRawStyle(element, 'position'), width = element.offsetWidth;
 
       if (width === 0 || width === null) {
+        // Opera/IE won't report the true width of the element through
+        // `getComputedStyle` if it's hidden. If we got a nonsensical value,
+        // we need to show the element and try again.
         element.style.display = 'block';
         width = element.offsetWidth;
       }
-
+      
+      // Preserve the context in case we get a percentage value.  
       var context = (position === 'fixed') ? document.viewport :
        element.parentNode;
-
+       
       var tempStyles = {
         visibility: 'hidden',
         display:    'block'
       };
-
+      
+      // If the element's `position: fixed`, it's already out of the document
+      // flow, so it's both unnecessary and inaccurate to set
+      // `position: absolute`.
       if (position !== 'fixed') tempStyles.position = 'absolute';
-
+       
       element.setStyle(tempStyles);
-
+      
       var positionedWidth = element.offsetWidth, newWidth;
       if (width && (positionedWidth === width)) {
+        // If the element's width is the same both before and after
+        // we set absolute positioning, that means:
+        //  (a) it was already absolutely-positioned; or
+        //  (b) it has an explicitly-set width, instead of width: auto.
+        // Either way, it means the element is the width it needs to be
+        // in order to report an accurate height.
         newWidth = getContentWidth(element, context);
       } else if (position === 'absolute' || position === 'fixed') {
+        // Absolute- and fixed-position elements' dimensions don't depend
+        // upon those of their parents.
         newWidth = getContentWidth(element, context);
       } else {
+        // Otherwise, the element's width depends upon the width of its
+        // parent.
         var parent = element.parentNode, pLayout = $(parent).getLayout();
 
         newWidth = pLayout.get('width') -
@@ -3681,12 +4011,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
          this.get('border-right') -
          this.get('margin-right');
       }
-
+      
+      // Whatever the case, we've now figured out the correct `width` value
+      // for the element.
       element.setStyle({ width: newWidth + 'px' });
-
+      
+      // The element is now ready for measuring.
       this._setPrepared(true);
     },
-
+    
     _end: function() {
       var element = this.element;
       var originalStyles = element.retrieve('prototype_original_styles');
@@ -3694,42 +4027,43 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       element.setStyle(originalStyles);
       this._setPrepared(false);
     },
-
+    
     _compute: function(property) {
       var COMPUTATIONS = Element.Layout.COMPUTATIONS;
       if (!(property in COMPUTATIONS)) {
         throw "Property not found.";
       }
-
+      
       return this._set(property, COMPUTATIONS[property].call(this, this.element));
     },
-
+    
     _isPrepared: function() {
       return this.element.retrieve('prototype_element_layout_prepared', false);
     },
-
+    
     _setPrepared: function(bool) {
       return this.element.store('prototype_element_layout_prepared', bool);
     },
-
+    
     toObject: function() {
       var args = $A(arguments);
       var keys = (args.length === 0) ? Element.Layout.PROPERTIES :
        args.join(' ').split(' ');
       var obj = {};
       keys.each( function(key) {
+        // Key needs to be a valid Element.Layout property.
         if (!Element.Layout.PROPERTIES.include(key)) return;
         var value = this.get(key);
         if (value != null) obj[key] = value;
       }, this);
       return obj;
     },
-
+    
     toHash: function() {
       var obj = this.toObject.apply(this, arguments);
       return new Hash(obj);
     },
-
+    
     toCSS: function() {
       var args = $A(arguments);
       var keys = (args.length === 0) ? Element.Layout.PROPERTIES :
@@ -3737,7 +4071,9 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       var css = {};
 
       keys.each( function(key) {
-        if (!Element.Layout.PROPERTIES.include(key)) return;
+        // Key needs to be a valid Element.Layout property...
+        if (!Element.Layout.PROPERTIES.include(key)) return;        
+        // ...but not a composite property.
         if (Element.Layout.COMPOSITE_PROPERTIES.include(key)) return;
 
         var value = this.get(key);
@@ -3745,27 +4081,27 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       }, this);
       return css;
     },
-
+    
     inspect: function() {
       return "#<Element.Layout>";
     }
   });
-
+  
   Object.extend(Element.Layout, {
     PROPERTIES: $w('height width top left right bottom border-left border-right border-top border-bottom padding-left padding-right padding-top padding-bottom margin-top margin-bottom margin-left margin-right padding-box-width padding-box-height border-box-width border-box-height margin-box-width margin-box-height'),
-
+    
     COMPOSITE_PROPERTIES: $w('padding-box-width padding-box-height margin-box-width margin-box-height border-box-width border-box-height'),
-
+    
     COMPUTATIONS: {
       'height': function(element) {
         if (!this._preComputing) this._begin();
-
+        
         var bHeight = this.get('border-box-height');
         if (bHeight <= 0) {
           if (!this._preComputing) this._end();
           return 0;
         }
-
+        
         var bTop = this.get('border-top'),
          bBottom = this.get('border-bottom');
 
@@ -3776,10 +4112,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
         return bHeight - bTop - bBottom - pTop - pBottom;
       },
-
+      
       'width': function(element) {
         if (!this._preComputing) this._begin();
-
+        
         var bWidth = this.get('border-box-width');
         if (bWidth <= 0) {
           if (!this._preComputing) this._end();
@@ -3791,16 +4127,16 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
 
         var pLeft = this.get('padding-left'),
          pRight = this.get('padding-right');
-
+         
         if (!this._preComputing) this._end();
         return bWidth - bLeft - bRight - pLeft - pRight;
       },
-
+      
       'padding-box-height': function(element) {
         var height = this.get('height'),
          pTop = this.get('padding-top'),
          pBottom = this.get('padding-bottom');
-
+         
         return height + pTop + pBottom;
       },
 
@@ -3808,32 +4144,32 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         var width = this.get('width'),
          pLeft = this.get('padding-left'),
          pRight = this.get('padding-right');
-
+         
         return width + pLeft + pRight;
       },
-
+      
       'border-box-height': function(element) {
         if (!this._preComputing) this._begin();
         var height = element.offsetHeight;
         if (!this._preComputing) this._end();
         return height;
       },
-
+            
       'border-box-width': function(element) {
         if (!this._preComputing) this._begin();
         var width = element.offsetWidth;
         if (!this._preComputing) this._end();
         return width;
       },
-
+      
       'margin-box-height': function(element) {
         var bHeight = this.get('border-box-height'),
          mTop = this.get('margin-top'),
          mBottom = this.get('margin-bottom');
-
+         
         if (bHeight <= 0) return 0;
-
-        return bHeight + mTop + mBottom;
+         
+        return bHeight + mTop + mBottom;        
       },
 
       'margin-box-width': function(element) {
@@ -3842,151 +4178,157 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
          mRight = this.get('margin-right');
 
         if (bWidth <= 0) return 0;
-
+         
         return bWidth + mLeft + mRight;
       },
-
+      
       'top': function(element) {
         var offset = element.positionedOffset();
         return offset.top;
       },
-
+      
       'bottom': function(element) {
         var offset = element.positionedOffset(),
          parent = element.getOffsetParent(),
          pHeight = parent.measure('height');
-
+        
         var mHeight = this.get('border-box-height');
-
+        
         return pHeight - mHeight - offset.top;
+        // 
+        // return getPixelValue(element, 'bottom');
       },
-
+      
       'left': function(element) {
         var offset = element.positionedOffset();
         return offset.left;
       },
-
+      
       'right': function(element) {
         var offset = element.positionedOffset(),
          parent = element.getOffsetParent(),
          pWidth = parent.measure('width');
-
+        
         var mWidth = this.get('border-box-width');
-
+        
         return pWidth - mWidth - offset.left;
+        //  
+        // return getPixelValue(element, 'right');
       },
-
+      
       'padding-top': function(element) {
         return getPixelValue(element, 'paddingTop');
       },
-
+      
       'padding-bottom': function(element) {
         return getPixelValue(element, 'paddingBottom');
       },
-
+      
       'padding-left': function(element) {
         return getPixelValue(element, 'paddingLeft');
       },
-
+      
       'padding-right': function(element) {
         return getPixelValue(element, 'paddingRight');
       },
-
+      
       'border-top': function(element) {
         return getPixelValue(element, 'borderTopWidth');
       },
-
+      
       'border-bottom': function(element) {
         return getPixelValue(element, 'borderBottomWidth');
       },
-
+      
       'border-left': function(element) {
         return getPixelValue(element, 'borderLeftWidth');
       },
-
+      
       'border-right': function(element) {
         return getPixelValue(element, 'borderRightWidth');
       },
-
+      
       'margin-top': function(element) {
         return getPixelValue(element, 'marginTop');
       },
-
+      
       'margin-bottom': function(element) {
         return getPixelValue(element, 'marginBottom');
       },
-
+      
       'margin-left': function(element) {
         return getPixelValue(element, 'marginLeft');
       },
-
+      
       'margin-right': function(element) {
         return getPixelValue(element, 'marginRight');
       }
     }
   });
-
+  
+  // An easier way to compute right and bottom offsets.
   if ('getBoundingClientRect' in document.documentElement) {
     Object.extend(Element.Layout.COMPUTATIONS, {
       'right': function(element) {
         var parent = hasLayout(element.getOffsetParent());
         var rect = element.getBoundingClientRect(),
          pRect = parent.getBoundingClientRect();
-
+         
         return (pRect.right - rect.right).round();
       },
-
+      
       'bottom': function(element) {
         var parent = hasLayout(element.getOffsetParent());
         var rect = element.getBoundingClientRect(),
          pRect = parent.getBoundingClientRect();
-
+         
         return (pRect.bottom - rect.bottom).round();
       }
     });
   }
-
+  
   Element.Offset = Class.create({
     initialize: function(left, top) {
       this.left = left.round();
       this.top  = top.round();
-
+      
+      // Act like an array.
       this[0] = this.left;
       this[1] = this.top;
     },
-
+    
     relativeTo: function(offset) {
       return new Element.Offset(
-        this.left - offset.left,
+        this.left - offset.left, 
         this.top  - offset.top
       );
     },
-
+    
     inspect: function() {
       return "#<Element.Offset left: #{left} top: #{top}>".interpolate(this);
     },
-
+    
     toString: function() {
       return "[#{left}, #{top}]".interpolate(this);
     },
-
+    
     toArray: function() {
       return [this.left, this.top];
     }
   });
-
+  
   function getLayout(element, preCompute) {
     return new Element.Layout(element, preCompute);
   }
-
+    
   function measure(element, property) {
-    return $(element).getLayout().get(property);
+    return $(element).getLayout().get(property);  
   }
 
   function getHeight(element) {
     return Element.getDimensions(element).height;
   }
-
+  
   function getWidth(element) {
     return Element.getDimensions(element).width;
   }
@@ -3994,57 +4336,63 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function getDimensions(element) {
     element = $(element);
     var display = Element.getStyle(element, 'display');
-
+    
     if (display && display !== 'none') {
       return { width: element.offsetWidth, height: element.offsetHeight };
     }
-
+    
+    // All *Width and *Height properties give 0 on elements with
+    // `display: none`, so show the element temporarily.
     var style = element.style;
     var originalStyles = {
       visibility: style.visibility,
       position:   style.position,
       display:    style.display
     };
-
+    
     var newStyles = {
       visibility: 'hidden',
       display:    'block'
     };
 
+    // Switching `fixed` to `absolute` causes issues in Safari.
     if (originalStyles.position !== 'fixed')
       newStyles.position = 'absolute';
-
+    
     Element.setStyle(element, newStyles);
-
+    
     var dimensions = {
       width:  element.offsetWidth,
       height: element.offsetHeight
     };
-
+    
     Element.setStyle(element, originalStyles);
 
     return dimensions;
   }
-
+  
   function getOffsetParent(element) {
     element = $(element);
-
+    
+    // For unusual cases like these, we standardize on returning the BODY
+    // element as the offset parent.
     if (isDocument(element) || isDetached(element) || isBody(element) || isHtml(element))
       return $(document.body);
 
+    // IE reports offset parent incorrectly for inline elements.
     var isInline = (Element.getStyle(element, 'display') === 'inline');
     if (!isInline && element.offsetParent) return isHtml(element.offsetParent) ? $(document.body) : $(element.offsetParent);
-
+    
     while ((element = element.parentNode) && element !== document.body) {
       if (Element.getStyle(element, 'position') !== 'static') {
         return isHtml(element) ? $(document.body) : $(element);
       }
     }
-
+    
     return $(document.body);
   }
-
-
+  
+  
   function cumulativeOffset(element) {
     element = $(element);
     var valueT = 0, valueL = 0;
@@ -4057,12 +4405,13 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     }
     return new Element.Offset(valueL, valueT);
   }
-
-  function positionedOffset(element) {
+  
+  function positionedOffset(element) {    
     element = $(element);
 
+    // Account for the margin of the element.
     var layout = element.getLayout();
-
+    
     var valueT = 0, valueL = 0;
     do {
       valueT += element.offsetTop  || 0;
@@ -4074,10 +4423,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         if (p !== 'static') break;
       }
     } while (element);
-
+    
     valueT -= layout.get('margin-top');
     valueL -= layout.get('margin-left');
-
+    
     return new Element.Offset(valueL, valueT);
   }
 
@@ -4099,34 +4448,38 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     do {
       valueT += element.offsetTop  || 0;
       valueL += element.offsetLeft || 0;
+      // Safari fix
       if (element.offsetParent == docBody &&
         Element.getStyle(element, 'position') == 'absolute') break;
     } while (element = element.offsetParent);
 
     element = forElement;
     do {
+      // Opera < 9.5 sets scrollTop/Left on both HTML and BODY elements.
+      // Other browsers set it only on the HTML element. The BODY element
+      // can be skipped since its scrollTop/Left should always be 0.
       if (element != docBody) {
         valueT -= element.scrollTop  || 0;
         valueL -= element.scrollLeft || 0;
       }
-    } while (element = element.parentNode);
+    } while (element = element.parentNode);    
     return new Element.Offset(valueL, valueT);
   }
-
+  
   function absolutize(element) {
     element = $(element);
-
+    
     if (Element.getStyle(element, 'position') === 'absolute') {
       return element;
     }
-
-    var offsetParent = getOffsetParent(element);
+    
+    var offsetParent = getOffsetParent(element);    
     var eOffset = element.viewportOffset(),
      pOffset = offsetParent.viewportOffset();
-
+     
     var offset = eOffset.relativeTo(pOffset);
-    var layout = element.getLayout();
-
+    var layout = element.getLayout();    
+    
     element.store('prototype_absolutize_original_styles', {
       position: element.getStyle('position'),
       left:     element.getStyle('left'),
@@ -4134,7 +4487,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       width:    element.getStyle('width'),
       height:   element.getStyle('height')
     });
-
+    
     element.setStyle({
       position: 'absolute',
       top:    offset.top + 'px',
@@ -4142,37 +4495,40 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       width:  layout.get('width') + 'px',
       height: layout.get('height') + 'px'
     });
-
+    
     return element;
   }
-
+  
   function relativize(element) {
     element = $(element);
     if (Element.getStyle(element, 'position') === 'relative') {
       return element;
     }
-
-    var originalStyles =
+    
+    // Restore the original styles as captured by Element#absolutize.
+    var originalStyles = 
      element.retrieve('prototype_absolutize_original_styles');
-
+    
     if (originalStyles) element.setStyle(originalStyles);
     return element;
   }
-
-
+  
+  
   function scrollTo(element) {
     element = $(element);
     var pos = Element.cumulativeOffset(element);
     window.scrollTo(pos.left, pos.top);
     return element;
   }
-
+  
 
   function makePositioned(element) {
     element = $(element);
     var position = Element.getStyle(element, 'position'), styles = {};
     if (position === 'static' || !position) {
       styles.position = 'relative';
+      // When an element is `position: relative` with an undefined `top` and
+      // `left`, Opera returns the offset relative to positioning context.
       if (Prototype.Browser.Opera) {
         styles.top  = 0;
         styles.left = 0;
@@ -4182,12 +4538,12 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     }
     return element;
   }
-
+  
   function undoPositioned(element) {
     element = $(element);
     var storage = Element.getStorage(element),
      madePositioned = storage.get('prototype_made_positioned');
-
+    
     if (madePositioned) {
       storage.unset('prototype_made_positioned');
       Element.setStyle(element, {
@@ -4197,39 +4553,42 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         left:     '',
         right:    ''
       });
-    }
+    }  
     return element;
   }
-
+  
   function makeClipping(element) {
     element = $(element);
-
+    
     var storage = Element.getStorage(element),
      madeClipping = storage.get('prototype_made_clipping');
-
+    
+    // The "prototype_made_clipping" storage key is meant to hold the
+    // original CSS overflow value. A string value or `null` means that we've
+    // called `makeClipping` already. An `undefined` value means we haven't.
     if (Object.isUndefined(madeClipping)) {
       var overflow = Element.getStyle(element, 'overflow');
       storage.set('prototype_made_clipping', overflow);
       if (overflow !== 'hidden')
         element.style.overflow = 'hidden';
     }
-
+    
     return element;
   }
-
+  
   function undoClipping(element) {
     element = $(element);
     var storage = Element.getStorage(element),
      overflow = storage.get('prototype_made_clipping');
-
+    
     if (!Object.isUndefined(overflow)) {
       storage.unset('prototype_made_clipping');
       element.style.overflow = overflow || '';
     }
-
+    
     return element;
   }
-
+  
   function clonePosition(element, source, options) {
     options = Object.extend({
       setLeft:    true,
@@ -4239,14 +4598,17 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       offsetTop:  0,
       offsetLeft: 0
     }, options || {});
-
+    
+    // Find page position of source.    
     source  = $(source);
-    element = $(element);
+    element = $(element);    
     var p, delta, layout, styles = {};
 
     if (options.setLeft || options.setTop) {
       p = Element.viewportOffset(source);
       delta = [0, 0];
+      // A delta of 0/0 will work for `positioned: fixed` elements, but
+      // for `position: absolute` we need to get the parent's offset.
       if (Element.getStyle(element, 'position') === 'absolute') {
         var parent = Element.getOffsetParent(element);
         if (parent !== document.body) delta = Element.viewportOffset(parent);
@@ -4257,25 +4619,30 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       layout = Element.getLayout(source);
     }
 
+    // Set position.
     if (options.setLeft)
       styles.left = (p[0] - delta[0] + options.offsetLeft) + 'px';
     if (options.setTop)
       styles.top  = (p[1] - delta[1] + options.offsetTop)  + 'px';
-
+    
     if (options.setWidth)
       styles.width  = layout.get('border-box-width')  + 'px';
     if (options.setHeight)
       styles.height = layout.get('border-box-height') + 'px';
-
+    
     return Element.setStyle(element, styles);
   }
-
-
+  
+    
   if (Prototype.Browser.IE) {
+    // IE doesn't report offsets correctly for static elements, so we change them
+    // to "relative" to get the values, then change them back.
     getOffsetParent = getOffsetParent.wrap(
       function(proceed, element) {
         element = $(element);
-
+        
+        // For unusual cases like these, we standardize on returning the BODY
+        // element as the offset parent.
         if (isDocument(element) || isDetached(element) || isBody(element) || isHtml(element))
           return $(document.body);
 
@@ -4288,13 +4655,15 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
         return value;
       }
     );
-
+    
     positionedOffset = positionedOffset.wrap(function(proceed, element) {
       element = $(element);
       if (!element.parentNode) return new Element.Offset(0, 0);
       var position = element.getStyle('position');
       if (position !== 'static') return proceed(element);
 
+      // Trigger hasLayout on the offset parent so that IE6 reports
+      // accurate offsetTop and offsetLeft values for position: fixed.
       var offsetParent = element.getOffsetParent();
       if (offsetParent && offsetParent.getStyle('position') === 'fixed')
         hasLayout(offsetParent);
@@ -4304,7 +4673,10 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       element.setStyle({ position: position });
       return value;
     });
-  } else if (Prototype.Browser.Webkit) {
+  } else if (Prototype.Browser.Webkit) {    
+    // Safari returns margins on body which is incorrect if the child is absolutely
+    // positioned.  For performance reasons, redefine Element#cumulativeOffset for
+    // KHTML/WebKit only.
     cumulativeOffset = function(element) {
       element = $(element);
       var valueT = 0, valueL = 0;
@@ -4321,8 +4693,8 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
       return new Element.Offset(valueL, valueT);
     };
   }
-
-
+  
+  
   Element.addMethods({
     getLayout:              getLayout,
     measure:                measure,
@@ -4333,7 +4705,7 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     cumulativeOffset:       cumulativeOffset,
     positionedOffset:       positionedOffset,
     cumulativeScrollOffset: cumulativeScrollOffset,
-    viewportOffset:         viewportOffset,
+    viewportOffset:         viewportOffset,    
     absolutize:             absolutize,
     relativize:             relativize,
     scrollTo:               scrollTo,
@@ -4343,48 +4715,54 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
     undoClipping:           undoClipping,
     clonePosition:          clonePosition
   });
-
+  
   function isBody(element) {
     return element.nodeName.toUpperCase() === 'BODY';
   }
-
+  
   function isHtml(element) {
     return element.nodeName.toUpperCase() === 'HTML';
   }
-
+  
   function isDocument(element) {
     return element.nodeType === Node.DOCUMENT_NODE;
   }
-
+  
   function isDetached(element) {
     return element !== document.body &&
      !Element.descendantOf(element, document.body);
   }
-
+  
+  // If the browser supports the nonstandard `getBoundingClientRect`
+  // (currently only IE and Firefox), it becomes far easier to obtain
+  // true offsets.
   if ('getBoundingClientRect' in document.documentElement) {
     Element.addMethods({
       viewportOffset: function(element) {
-        element = $(element);
+        element = $(element);        
         if (isDetached(element)) return new Element.Offset(0, 0);
 
         var rect = element.getBoundingClientRect(),
          docEl = document.documentElement;
+        // The HTML element on IE < 8 has a 2px border by default, giving
+        // an incorrect offset. We correct this by subtracting clientTop
+        // and clientLeft.
         return new Element.Offset(rect.left - docEl.clientLeft,
          rect.top - docEl.clientTop);
       }
-    });
+    }); 
   }
-
-
+  
+  
 })();
 
 (function() {
-
+  
   var IS_OLD_OPERA = Prototype.Browser.Opera &&
    (window.parseFloat(window.opera.version()) < 9.5);
   var ROOT = null;
   function getRootElement() {
-    if (ROOT) return ROOT;
+    if (ROOT) return ROOT;    
     ROOT = IS_OLD_OPERA ? document.body : document.documentElement;
     return ROOT;
   }
@@ -4392,31 +4770,31 @@ Ajax.PeriodicalUpdater = Class.create(Ajax.Base, {
   function getDimensions() {
     return { width: this.getWidth(), height: this.getHeight() };
   }
-
+  
   function getWidth() {
     return getRootElement().clientWidth;
   }
-
+  
   function getHeight() {
     return getRootElement().clientHeight;
   }
-
+  
   function getScrollOffsets() {
     var x = window.pageXOffset || document.documentElement.scrollLeft ||
      document.body.scrollLeft;
     var y = window.pageYOffset || document.documentElement.scrollTop ||
      document.body.scrollTop;
-
+     
     return new Element.Offset(x, y);
   }
-
+  
   document.viewport = {
     getDimensions:    getDimensions,
     getWidth:         getWidth,
     getHeight:        getHeight,
     getScrollOffsets: getScrollOffsets
   };
-
+  
 })();
 window.$$ = function() {
   var expression = $A(arguments).join(', ');
@@ -4424,7 +4802,7 @@ window.$$ = function() {
 };
 
 Prototype.Selector = (function() {
-
+  
   function select() {
     throw new Error('Method "Prototype.Selector.select" must be defined.');
   }
@@ -4443,17 +4821,17 @@ Prototype.Selector = (function() {
       }
     }
   }
-
+  
   function extendElements(elements) {
     for (var i = 0, length = elements.length; i < length; i++) {
       Element.extend(elements[i]);
     }
     return elements;
   }
-
-
+  
+  
   var K = Prototype.K;
-
+  
   return {
     select: select,
     match: match,
@@ -4484,6 +4862,7 @@ var i,
 	outermostContext,
 	sortInput,
 
+	// Local document vars
 	setDocument,
 	document,
 	docElem,
@@ -4493,6 +4872,7 @@ var i,
 	matches,
 	contains,
 
+	// Instance-specific data
 	expando = "sizzle" + -(new Date()),
 	preferredDoc = window.document,
 	dirruns = 0,
@@ -4509,15 +4889,18 @@ var i,
 		return 0;
 	},
 
+	// General-purpose constants
 	strundefined = typeof undefined,
 	MAX_NEGATIVE = 1 << 31,
 
+	// Instance methods
 	hasOwn = ({}).hasOwnProperty,
 	arr = [],
 	pop = arr.pop,
 	push_native = arr.push,
 	push = arr.push,
 	slice = arr.slice,
+	// Use a stripped-down indexOf if we can't use a native one
 	indexOf = arr.indexOf || function( elem ) {
 		var i = 0,
 			len = this.length;
@@ -4531,17 +4914,31 @@ var i,
 
 	booleans = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",
 
+	// Regular expressions
 
+	// Whitespace characters http://www.w3.org/TR/css3-selectors/#whitespace
 	whitespace = "[\\x20\\t\\r\\n\\f]",
+	// http://www.w3.org/TR/css3-syntax/#characters
 	characterEncoding = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
 
+	// Loosely modeled on CSS identifier characters
+	// An unquoted value should be a CSS identifier http://www.w3.org/TR/css3-selectors/#attribute-selectors
+	// Proper syntax: http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
 	identifier = characterEncoding.replace( "w", "w#" ),
 
+	// Acceptable operators http://www.w3.org/TR/selectors/#attribute-selectors
 	attributes = "\\[" + whitespace + "*(" + characterEncoding + ")" + whitespace +
 		"*(?:([*^$|!~]?=)" + whitespace + "*(?:(['\"])((?:\\\\.|[^\\\\])*?)\\3|(" + identifier + ")|)|)" + whitespace + "*\\]",
 
+	// Prefer arguments quoted,
+	//   then not containing pseudos/brackets,
+	//   then attribute selectors/non-parenthetical expressions,
+	//   then anything else
+	// These preferences are here to reduce the number of selectors
+	//   needing tokenize in the PSEUDO preFilter
 	pseudos = ":(" + characterEncoding + ")(?:\\(((['\"])((?:\\\\.|[^\\\\])*?)\\3|((?:\\\\.|[^\\\\()[\\]]|" + attributes.replace( 3, 8 ) + ")*)|.*)\\)|)",
 
+	// Leading and non-escaped trailing whitespace, capturing some non-whitespace characters preceding the latter
 	rtrim = new RegExp( "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g" ),
 
 	rcomma = new RegExp( "^" + whitespace + "*," + whitespace + "*" ),
@@ -4563,12 +4960,15 @@ var i,
 			"*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
 			"*(\\d+)|))" + whitespace + "*\\)|)", "i" ),
 		"bool": new RegExp( "^(?:" + booleans + ")$", "i" ),
+		// For use in libraries implementing .is()
+		// We use this for POS matching in `select`
 		"needsContext": new RegExp( "^" + whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" +
 			whitespace + "*((?:-\\d)?\\d*)" + whitespace + "*\\)|)(?=[^-]|$)", "i" )
 	},
 
 	rnative = /^[^{]+\{\s*\[native \w/,
 
+	// Easily-parseable/retrievable ID or TAG or CLASS selectors
 	rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
 	rinputs = /^(?:input|select|textarea|button)$/i,
@@ -4576,13 +4976,19 @@ var i,
 
 	rescape = /'|\\/g,
 
+	// CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
 	runescape = new RegExp( "\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig" ),
 	funescape = function( _, escaped, escapedWhitespace ) {
 		var high = "0x" + escaped - 0x10000;
+		// NaN means non-codepoint
+		// Support: Firefox
+		// Workaround erroneous numeric interpretation of +"0x"
 		return high !== high || escapedWhitespace ?
 			escaped :
+			// BMP codepoint
 			high < 0 ?
 				String.fromCharCode( high + 0x10000 ) :
+				// Supplemental Plane codepoint (surrogate pair)
 				String.fromCharCode( high >> 10 | 0xD800, high & 0x3FF | 0xDC00 );
 	};
 
@@ -4591,17 +4997,23 @@ try {
 		(arr = slice.call( preferredDoc.childNodes )),
 		preferredDoc.childNodes
 	);
+	// Support: Android<4.0
+	// Detect silently failing push.apply
 	arr[ preferredDoc.childNodes.length ].nodeType;
 } catch ( e ) {
 	push = { apply: arr.length ?
 
+		// Leverage slice if possible
 		function( target, els ) {
 			push_native.apply( target, slice.call(els) );
 		} :
 
+		// Support: IE<9
+		// Otherwise append directly
 		function( target, els ) {
 			var j = target.length,
 				i = 0;
+			// Can't trust NodeList.length
 			while ( (target[j++] = els[i++]) ) {}
 			target.length = j - 1;
 		}
@@ -4610,6 +5022,7 @@ try {
 
 function Sizzle( selector, context, results, seed ) {
 	var match, elem, m, nodeType,
+		// QSA vars
 		i, groups, old, nid, newContext, newSelector;
 
 	if ( ( context ? context.ownerDocument || context : preferredDoc ) !== document ) {
@@ -4629,11 +5042,17 @@ function Sizzle( selector, context, results, seed ) {
 
 	if ( documentIsHTML && !seed ) {
 
+		// Shortcuts
 		if ( (match = rquickExpr.exec( selector )) ) {
+			// Speed-up: Sizzle("#ID")
 			if ( (m = match[1]) ) {
 				if ( nodeType === 9 ) {
 					elem = context.getElementById( m );
+					// Check parentNode to catch when Blackberry 4.6 returns
+					// nodes that are no longer in the document #6963
 					if ( elem && elem.parentNode ) {
+						// Handle the case where IE, Opera, and Webkit return items
+						// by name instead of ID
 						if ( elem.id === m ) {
 							results.push( elem );
 							return results;
@@ -4642,6 +5061,7 @@ function Sizzle( selector, context, results, seed ) {
 						return results;
 					}
 				} else {
+					// Context is not a document
 					if ( context.ownerDocument && (elem = context.ownerDocument.getElementById( m )) &&
 						contains( context, elem ) && elem.id === m ) {
 						results.push( elem );
@@ -4649,21 +5069,28 @@ function Sizzle( selector, context, results, seed ) {
 					}
 				}
 
+			// Speed-up: Sizzle("TAG")
 			} else if ( match[2] ) {
 				push.apply( results, context.getElementsByTagName( selector ) );
 				return results;
 
+			// Speed-up: Sizzle(".CLASS")
 			} else if ( (m = match[3]) && support.getElementsByClassName && context.getElementsByClassName ) {
 				push.apply( results, context.getElementsByClassName( m ) );
 				return results;
 			}
 		}
 
+		// QSA path
 		if ( support.qsa && (!rbuggyQSA || !rbuggyQSA.test( selector )) ) {
 			nid = old = expando;
 			newContext = context;
 			newSelector = nodeType === 9 && selector;
 
+			// qSA works strangely on Element-rooted queries
+			// We can work around this by specifying an extra ID on the root
+			// and working up from there (Thanks to Andrew Dupont for the technique)
+			// IE 8 doesn't work on object elements
 			if ( nodeType === 1 && context.nodeName.toLowerCase() !== "object" ) {
 				groups = tokenize( selector );
 
@@ -4698,20 +5125,17 @@ function Sizzle( selector, context, results, seed ) {
 		}
 	}
 
+	// All others
 	return select( selector.replace( rtrim, "$1" ), context, results, seed );
 }
 
-/**
- * Create key-value caches of limited size
- * @returns {Function(string, Object)} Returns the Object data after storing it on itself with
- *	property name the (space-suffixed) string and (if the cache is larger than Expr.cacheLength)
- *	deleting the oldest entry
- */
 function createCache() {
 	var keys = [];
 
 	function cache( key, value ) {
+		// Use (key + " ") to avoid collision with native prototype properties (see Issue #157)
 		if ( keys.push( key += " " ) > Expr.cacheLength ) {
+			// Only keep the most recent entries
 			delete cache[ keys.shift() ];
 		}
 		return (cache[ key ] = value);
@@ -4719,19 +5143,11 @@ function createCache() {
 	return cache;
 }
 
-/**
- * Mark a function for special use by Sizzle
- * @param {Function} fn The function to mark
- */
 function markFunction( fn ) {
 	fn[ expando ] = true;
 	return fn;
 }
 
-/**
- * Support testing using an element
- * @param {Function} fn Passed the created div and expects a boolean result
- */
 function assert( fn ) {
 	var div = document.createElement("div");
 
@@ -4740,18 +5156,15 @@ function assert( fn ) {
 	} catch (e) {
 		return false;
 	} finally {
+		// Remove from its parent by default
 		if ( div.parentNode ) {
 			div.parentNode.removeChild( div );
 		}
+		// release memory in IE
 		div = null;
 	}
 }
 
-/**
- * Adds the same handler for all of the specified attrs
- * @param {String} attrs Pipe-separated list of attributes
- * @param {Function} handler The method that will be applied
- */
 function addHandle( attrs, handler ) {
 	var arr = attrs.split("|"),
 		i = attrs.length;
@@ -4761,22 +5174,18 @@ function addHandle( attrs, handler ) {
 	}
 }
 
-/**
- * Checks document order of two siblings
- * @param {Element} a
- * @param {Element} b
- * @returns {Number} Returns less than 0 if a precedes b, greater than 0 if a follows b
- */
 function siblingCheck( a, b ) {
 	var cur = b && a,
 		diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
 			( ~b.sourceIndex || MAX_NEGATIVE ) -
 			( ~a.sourceIndex || MAX_NEGATIVE );
 
+	// Use IE sourceIndex if available on both nodes
 	if ( diff ) {
 		return diff;
 	}
 
+	// Check if b follows a
 	if ( cur ) {
 		while ( (cur = cur.nextSibling) ) {
 			if ( cur === b ) {
@@ -4788,10 +5197,6 @@ function siblingCheck( a, b ) {
 	return a ? 1 : -1;
 }
 
-/**
- * Returns a function to use in pseudos for input types
- * @param {String} type
- */
 function createInputPseudo( type ) {
 	return function( elem ) {
 		var name = elem.nodeName.toLowerCase();
@@ -4799,10 +5204,6 @@ function createInputPseudo( type ) {
 	};
 }
 
-/**
- * Returns a function to use in pseudos for buttons
- * @param {String} type
- */
 function createButtonPseudo( type ) {
 	return function( elem ) {
 		var name = elem.nodeName.toLowerCase();
@@ -4810,10 +5211,6 @@ function createButtonPseudo( type ) {
 	};
 }
 
-/**
- * Returns a function to use in pseudos for positionals
- * @param {Function} fn
- */
 function createPositionalPseudo( fn ) {
 	return markFunction(function( argument ) {
 		argument = +argument;
@@ -4822,6 +5219,7 @@ function createPositionalPseudo( fn ) {
 				matchIndexes = fn( [], seed.length, argument ),
 				i = matchIndexes.length;
 
+			// Match elements found at the specified indexes
 			while ( i-- ) {
 				if ( seed[ (j = matchIndexes[i]) ] ) {
 					seed[j] = !(matches[j] = seed[j]);
@@ -4831,35 +5229,35 @@ function createPositionalPseudo( fn ) {
 	});
 }
 
-/**
- * Detect xml
- * @param {Element|Object} elem An element or a document
- */
 isXML = Sizzle.isXML = function( elem ) {
+	// documentElement is verified for cases where it doesn't yet exist
+	// (such as loading iframes in IE - #4833)
 	var documentElement = elem && (elem.ownerDocument || elem).documentElement;
 	return documentElement ? documentElement.nodeName !== "HTML" : false;
 };
 
 support = Sizzle.support = {};
 
-/**
- * Sets document-related variables once based on the current document
- * @param {Element|Object} [doc] An element or document object to use to set the document
- * @returns {Object} Returns the current document
- */
 setDocument = Sizzle.setDocument = function( node ) {
 	var doc = node ? node.ownerDocument || node : preferredDoc,
 		parent = doc.defaultView;
 
+	// If no document and documentElement is available, return
 	if ( doc === document || doc.nodeType !== 9 || !doc.documentElement ) {
 		return document;
 	}
 
+	// Set our document
 	document = doc;
 	docElem = doc.documentElement;
 
+	// Support tests
 	documentIsHTML = !isXML( doc );
 
+	// Support: IE>8
+	// If iframe document is assigned to "document" variable and if iframe has been reloaded,
+	// IE will throw "permission denied" error when accessing "document" variable, see jQuery #13936
+	// IE6-8 do not support the defaultView property so parent will be undefined
 	if ( parent && parent.attachEvent && parent !== parent.top ) {
 		parent.attachEvent( "onbeforeunload", function() {
 			setDocument();
@@ -4869,6 +5267,8 @@ setDocument = Sizzle.setDocument = function( node ) {
 	/* Attributes
 	---------------------------------------------------------------------- */
 
+	// Support: IE<8
+	// Verify that getAttribute really returns attributes and not properties (excepting IE8 booleans)
 	support.attributes = assert(function( div ) {
 		div.className = "i";
 		return !div.getAttribute("className");
@@ -4877,27 +5277,40 @@ setDocument = Sizzle.setDocument = function( node ) {
 	/* getElement(s)By*
 	---------------------------------------------------------------------- */
 
+	// Check if getElementsByTagName("*") returns only elements
 	support.getElementsByTagName = assert(function( div ) {
 		div.appendChild( doc.createComment("") );
 		return !div.getElementsByTagName("*").length;
 	});
 
+	// Check if getElementsByClassName can be trusted
 	support.getElementsByClassName = assert(function( div ) {
 		div.innerHTML = "<div class='a'></div><div class='a i'></div>";
 
+		// Support: Safari<4
+		// Catch class over-caching
 		div.firstChild.className = "i";
+		// Support: Opera<10
+		// Catch gEBCN failure to find non-leading classes
 		return div.getElementsByClassName("i").length === 2;
 	});
 
+	// Support: IE<10
+	// Check if getElementById returns elements by name
+	// The broken getElementById methods don't pick up programatically-set names,
+	// so use a roundabout getElementsByName test
 	support.getById = assert(function( div ) {
 		docElem.appendChild( div ).id = expando;
 		return !doc.getElementsByName || !doc.getElementsByName( expando ).length;
 	});
 
+	// ID find and filter
 	if ( support.getById ) {
 		Expr.find["ID"] = function( id, context ) {
 			if ( typeof context.getElementById !== strundefined && documentIsHTML ) {
 				var m = context.getElementById( id );
+				// Check parentNode to catch when Blackberry 4.6 returns
+				// nodes that are no longer in the document #6963
 				return m && m.parentNode ? [m] : [];
 			}
 		};
@@ -4908,6 +5321,8 @@ setDocument = Sizzle.setDocument = function( node ) {
 			};
 		};
 	} else {
+		// Support: IE6/7
+		// getElementById is not reliable as a find shortcut
 		delete Expr.find["ID"];
 
 		Expr.filter["ID"] =  function( id ) {
@@ -4919,6 +5334,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 		};
 	}
 
+	// Tag
 	Expr.find["TAG"] = support.getElementsByTagName ?
 		function( tag, context ) {
 			if ( typeof context.getElementsByTagName !== strundefined ) {
@@ -4931,6 +5347,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 				i = 0,
 				results = context.getElementsByTagName( tag );
 
+			// Filter out possible comments
 			if ( tag === "*" ) {
 				while ( (elem = results[i++]) ) {
 					if ( elem.nodeType === 1 ) {
@@ -4943,6 +5360,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 			return results;
 		};
 
+	// Class
 	Expr.find["CLASS"] = support.getElementsByClassName && function( className, context ) {
 		if ( typeof context.getElementsByClassName !== strundefined && documentIsHTML ) {
 			return context.getElementsByClassName( className );
@@ -4952,19 +5370,38 @@ setDocument = Sizzle.setDocument = function( node ) {
 	/* QSA/matchesSelector
 	---------------------------------------------------------------------- */
 
+	// QSA and matchesSelector support
 
+	// matchesSelector(:active) reports false when true (IE9/Opera 11.5)
 	rbuggyMatches = [];
 
+	// qSa(:focus) reports false when true (Chrome 21)
+	// We allow this because of a bug in IE8/9 that throws an error
+	// whenever `document.activeElement` is accessed on an iframe
+	// So, we allow :focus to pass through QSA all the time to avoid the IE error
+	// See http://bugs.jquery.com/ticket/13378
 	rbuggyQSA = [];
 
 	if ( (support.qsa = rnative.test( doc.querySelectorAll )) ) {
+		// Build QSA regex
+		// Regex strategy adopted from Diego Perini
 		assert(function( div ) {
+			// Select is set to empty string on purpose
+			// This is to test IE's treatment of not explicitly
+			// setting a boolean content attribute,
+			// since its presence should be enough
+			// http://bugs.jquery.com/ticket/12359
 			div.innerHTML = "<select><option selected=''></option></select>";
 
+			// Support: IE8
+			// Boolean attributes and "value" are not treated correctly
 			if ( !div.querySelectorAll("[selected]").length ) {
 				rbuggyQSA.push( "\\[" + whitespace + "*(?:value|" + booleans + ")" );
 			}
 
+			// Webkit/Opera - :checked should return selected option elements
+			// http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+			// IE8 throws error here and will not see later tests
 			if ( !div.querySelectorAll(":checked").length ) {
 				rbuggyQSA.push(":checked");
 			}
@@ -4972,6 +5409,11 @@ setDocument = Sizzle.setDocument = function( node ) {
 
 		assert(function( div ) {
 
+			// Support: Opera 10-12/IE8
+			// ^= $= *= and empty values
+			// Should not select anything
+			// Support: Windows 8 Native Apps
+			// The type attribute is restricted during .innerHTML assignment
 			var input = doc.createElement("input");
 			input.setAttribute( "type", "hidden" );
 			div.appendChild( input ).setAttribute( "t", "" );
@@ -4980,10 +5422,13 @@ setDocument = Sizzle.setDocument = function( node ) {
 				rbuggyQSA.push( "[*^$]=" + whitespace + "*(?:''|\"\")" );
 			}
 
+			// FF 3.5 - :enabled/:disabled and hidden elements (hidden elements are still enabled)
+			// IE8 throws error here and will not see later tests
 			if ( !div.querySelectorAll(":enabled").length ) {
 				rbuggyQSA.push( ":enabled", ":disabled" );
 			}
 
+			// Opera 10-11 does not throw on post-comma invalid pseudos
 			div.querySelectorAll("*,:x");
 			rbuggyQSA.push(",.*:");
 		});
@@ -4995,8 +5440,12 @@ setDocument = Sizzle.setDocument = function( node ) {
 		docElem.msMatchesSelector) )) ) {
 
 		assert(function( div ) {
+			// Check to see if it's possible to do matchesSelector
+			// on a disconnected node (IE 9)
 			support.disconnectedMatch = matches.call( div, "div" );
 
+			// This should fail with an exception
+			// Gecko does not error, returns false instead
 			matches.call( div, "[s!='']:x" );
 			rbuggyMatches.push( "!=", pseudos );
 		});
@@ -5008,6 +5457,9 @@ setDocument = Sizzle.setDocument = function( node ) {
 	/* Contains
 	---------------------------------------------------------------------- */
 
+	// Element contains another
+	// Purposefully does not implement inclusive descendent
+	// As in, an element does not contain itself
 	contains = rnative.test( docElem.contains ) || docElem.compareDocumentPosition ?
 		function( a, b ) {
 			var adown = a.nodeType === 9 ? a.documentElement : a,
@@ -5032,9 +5484,11 @@ setDocument = Sizzle.setDocument = function( node ) {
 	/* Sorting
 	---------------------------------------------------------------------- */
 
+	// Document order sorting
 	sortOrder = docElem.compareDocumentPosition ?
 	function( a, b ) {
 
+		// Flag for duplicate removal
 		if ( a === b ) {
 			hasDuplicate = true;
 			return 0;
@@ -5043,9 +5497,11 @@ setDocument = Sizzle.setDocument = function( node ) {
 		var compare = b.compareDocumentPosition && a.compareDocumentPosition && a.compareDocumentPosition( b );
 
 		if ( compare ) {
+			// Disconnected nodes
 			if ( compare & 1 ||
 				(!support.sortDetached && b.compareDocumentPosition( a ) === compare) ) {
 
+				// Choose the first element that is related to our preferred document
 				if ( a === doc || contains(preferredDoc, a) ) {
 					return -1;
 				}
@@ -5053,6 +5509,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 					return 1;
 				}
 
+				// Maintain original order
 				return sortInput ?
 					( indexOf.call( sortInput, a ) - indexOf.call( sortInput, b ) ) :
 					0;
@@ -5061,6 +5518,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 			return compare & 4 ? -1 : 1;
 		}
 
+		// Not directly comparable, sort on existence of method
 		return a.compareDocumentPosition ? -1 : 1;
 	} :
 	function( a, b ) {
@@ -5071,10 +5529,12 @@ setDocument = Sizzle.setDocument = function( node ) {
 			ap = [ a ],
 			bp = [ b ];
 
+		// Exit early if the nodes are identical
 		if ( a === b ) {
 			hasDuplicate = true;
 			return 0;
 
+		// Parentless nodes are either documents or disconnected
 		} else if ( !aup || !bup ) {
 			return a === doc ? -1 :
 				b === doc ? 1 :
@@ -5084,10 +5544,12 @@ setDocument = Sizzle.setDocument = function( node ) {
 				( indexOf.call( sortInput, a ) - indexOf.call( sortInput, b ) ) :
 				0;
 
+		// If the nodes are siblings, we can do a quick check
 		} else if ( aup === bup ) {
 			return siblingCheck( a, b );
 		}
 
+		// Otherwise we need full lists of their ancestors for comparison
 		cur = a;
 		while ( (cur = cur.parentNode) ) {
 			ap.unshift( cur );
@@ -5097,13 +5559,16 @@ setDocument = Sizzle.setDocument = function( node ) {
 			bp.unshift( cur );
 		}
 
+		// Walk down the tree looking for a discrepancy
 		while ( ap[i] === bp[i] ) {
 			i++;
 		}
 
 		return i ?
+			// Do a sibling check if the nodes have a common ancestor
 			siblingCheck( ap[i], bp[i] ) :
 
+			// Otherwise nodes in our document sort first
 			ap[i] === preferredDoc ? -1 :
 			bp[i] === preferredDoc ? 1 :
 			0;
@@ -5117,10 +5582,12 @@ Sizzle.matches = function( expr, elements ) {
 };
 
 Sizzle.matchesSelector = function( elem, expr ) {
+	// Set document vars if needed
 	if ( ( elem.ownerDocument || elem ) !== document ) {
 		setDocument( elem );
 	}
 
+	// Make sure that attribute selectors are quoted
 	expr = expr.replace( rattributeQuotes, "='$1']" );
 
 	if ( support.matchesSelector && documentIsHTML &&
@@ -5130,7 +5597,10 @@ Sizzle.matchesSelector = function( elem, expr ) {
 		try {
 			var ret = matches.call( elem, expr );
 
+			// IE 9's matchesSelector returns false on disconnected nodes
 			if ( ret || support.disconnectedMatch ||
+					// As well, disconnected nodes are said to be in a document
+					// fragment in IE 9
 					elem.document && elem.document.nodeType !== 11 ) {
 				return ret;
 			}
@@ -5141,6 +5611,7 @@ Sizzle.matchesSelector = function( elem, expr ) {
 };
 
 Sizzle.contains = function( context, elem ) {
+	// Set document vars if needed
 	if ( ( context.ownerDocument || context ) !== document ) {
 		setDocument( context );
 	}
@@ -5148,11 +5619,13 @@ Sizzle.contains = function( context, elem ) {
 };
 
 Sizzle.attr = function( elem, name ) {
+	// Set document vars if needed
 	if ( ( elem.ownerDocument || elem ) !== document ) {
 		setDocument( elem );
 	}
 
 	var fn = Expr.attrHandle[ name.toLowerCase() ],
+		// Don't get fooled by Object.prototype properties (jQuery #13807)
 		val = fn && hasOwn.call( Expr.attrHandle, name.toLowerCase() ) ?
 			fn( elem, name, !documentIsHTML ) :
 			undefined;
@@ -5170,16 +5643,13 @@ Sizzle.error = function( msg ) {
 	throw new Error( "Syntax error, unrecognized expression: " + msg );
 };
 
-/**
- * Document sorting and removing duplicates
- * @param {ArrayLike} results
- */
 Sizzle.uniqueSort = function( results ) {
 	var elem,
 		duplicates = [],
 		j = 0,
 		i = 0;
 
+	// Unless we *know* we can detect duplicates, assume their presence
 	hasDuplicate = !support.detectDuplicates;
 	sortInput = !support.sortStable && results.slice( 0 );
 	results.sort( sortOrder );
@@ -5198,10 +5668,6 @@ Sizzle.uniqueSort = function( results ) {
 	return results;
 };
 
-/**
- * Utility function for retrieving the text value of an array of DOM nodes
- * @param {Array|Element} elem
- */
 getText = Sizzle.getText = function( elem ) {
 	var node,
 		ret = "",
@@ -5209,13 +5675,18 @@ getText = Sizzle.getText = function( elem ) {
 		nodeType = elem.nodeType;
 
 	if ( !nodeType ) {
+		// If no nodeType, this is expected to be an array
 		for ( ; (node = elem[i]); i++ ) {
+			// Do not traverse comment nodes
 			ret += getText( node );
 		}
 	} else if ( nodeType === 1 || nodeType === 9 || nodeType === 11 ) {
+		// Use textContent for elements
+		// innerText usage removed for consistency of new lines (see #11153)
 		if ( typeof elem.textContent === "string" ) {
 			return elem.textContent;
 		} else {
+			// Traverse its children
 			for ( elem = elem.firstChild; elem; elem = elem.nextSibling ) {
 				ret += getText( elem );
 			}
@@ -5223,12 +5694,14 @@ getText = Sizzle.getText = function( elem ) {
 	} else if ( nodeType === 3 || nodeType === 4 ) {
 		return elem.nodeValue;
 	}
+	// Do not include comment or processing instruction nodes
 
 	return ret;
 };
 
 Expr = Sizzle.selectors = {
 
+	// Can be adjusted by the user
 	cacheLength: 50,
 
 	createPseudo: markFunction,
@@ -5250,6 +5723,7 @@ Expr = Sizzle.selectors = {
 		"ATTR": function( match ) {
 			match[1] = match[1].replace( runescape, funescape );
 
+			// Move the given value to match[3] whether quoted or unquoted
 			match[3] = ( match[4] || match[5] || "" ).replace( runescape, funescape );
 
 			if ( match[2] === "~=" ) {
@@ -5273,13 +5747,17 @@ Expr = Sizzle.selectors = {
 			match[1] = match[1].toLowerCase();
 
 			if ( match[1].slice( 0, 3 ) === "nth" ) {
+				// nth-* requires argument
 				if ( !match[3] ) {
 					Sizzle.error( match[0] );
 				}
 
+				// numeric x and y parameters for Expr.filter.CHILD
+				// remember that false/true cast respectively to 0/1
 				match[4] = +( match[4] ? match[5] + (match[6] || 1) : 2 * ( match[3] === "even" || match[3] === "odd" ) );
 				match[5] = +( ( match[7] + match[8] ) || match[3] === "odd" );
 
+			// other types prohibit arguments
 			} else if ( match[3] ) {
 				Sizzle.error( match[0] );
 			}
@@ -5295,17 +5773,23 @@ Expr = Sizzle.selectors = {
 				return null;
 			}
 
+			// Accept quoted arguments as-is
 			if ( match[3] && match[4] !== undefined ) {
 				match[2] = match[4];
 
+			// Strip excess characters from unquoted arguments
 			} else if ( unquoted && rpseudo.test( unquoted ) &&
+				// Get excess from tokenize (recursively)
 				(excess = tokenize( unquoted, true )) &&
+				// advance to the next closing parenthesis
 				(excess = unquoted.indexOf( ")", unquoted.length - excess ) - unquoted.length) ) {
 
+				// excess is a negative index
 				match[0] = match[0].slice( 0, excess );
 				match[2] = unquoted.slice( 0, excess );
 			}
 
+			// Return only captures needed by the pseudo filter method (type and argument)
 			return match.slice( 0, 3 );
 		}
 	},
@@ -5362,6 +5846,7 @@ Expr = Sizzle.selectors = {
 
 			return first === 1 && last === 0 ?
 
+				// Shortcut for :nth-*(n)
 				function( elem ) {
 					return !!elem.parentNode;
 				} :
@@ -5375,6 +5860,7 @@ Expr = Sizzle.selectors = {
 
 					if ( parent ) {
 
+						// :(first|last|only)-(child|of-type)
 						if ( simple ) {
 							while ( dir ) {
 								node = elem;
@@ -5383,6 +5869,7 @@ Expr = Sizzle.selectors = {
 										return false;
 									}
 								}
+								// Reverse direction for :only-* (if we haven't yet done so)
 								start = dir = type === "only" && !start && "nextSibling";
 							}
 							return true;
@@ -5390,7 +5877,9 @@ Expr = Sizzle.selectors = {
 
 						start = [ forward ? parent.firstChild : parent.lastChild ];
 
+						// non-xml :nth-child(...) stores cache data on `parent`
 						if ( forward && useCache ) {
+							// Seek `elem` from a previously-cached index
 							outerCache = parent[ expando ] || (parent[ expando ] = {});
 							cache = outerCache[ type ] || [];
 							nodeIndex = cache[0] === dirruns && cache[1];
@@ -5399,22 +5888,28 @@ Expr = Sizzle.selectors = {
 
 							while ( (node = ++nodeIndex && node && node[ dir ] ||
 
+								// Fallback to seeking `elem` from the start
 								(diff = nodeIndex = 0) || start.pop()) ) {
 
+								// When found, cache indexes on `parent` and break
 								if ( node.nodeType === 1 && ++diff && node === elem ) {
 									outerCache[ type ] = [ dirruns, nodeIndex, diff ];
 									break;
 								}
 							}
 
+						// Use previously-cached element index if available
 						} else if ( useCache && (cache = (elem[ expando ] || (elem[ expando ] = {}))[ type ]) && cache[0] === dirruns ) {
 							diff = cache[1];
 
+						// xml :nth-child(...) or :nth-last-child(...) or :nth(-last)?-of-type(...)
 						} else {
+							// Use the same loop as above to seek `elem` from the start
 							while ( (node = ++nodeIndex && node && node[ dir ] ||
 								(diff = nodeIndex = 0) || start.pop()) ) {
 
 								if ( ( ofType ? node.nodeName.toLowerCase() === name : node.nodeType === 1 ) && ++diff ) {
+									// Cache the index of each encountered element
 									if ( useCache ) {
 										(node[ expando ] || (node[ expando ] = {}))[ type ] = [ dirruns, diff ];
 									}
@@ -5426,6 +5921,7 @@ Expr = Sizzle.selectors = {
 							}
 						}
 
+						// Incorporate the offset, then check against cycle size
 						diff -= last;
 						return diff === first || ( diff % first === 0 && diff / first >= 0 );
 					}
@@ -5433,14 +5929,22 @@ Expr = Sizzle.selectors = {
 		},
 
 		"PSEUDO": function( pseudo, argument ) {
+			// pseudo-class names are case-insensitive
+			// http://www.w3.org/TR/selectors/#pseudo-classes
+			// Prioritize by case sensitivity in case custom pseudos are added with uppercase letters
+			// Remember that setFilters inherits from pseudos
 			var args,
 				fn = Expr.pseudos[ pseudo ] || Expr.setFilters[ pseudo.toLowerCase() ] ||
 					Sizzle.error( "unsupported pseudo: " + pseudo );
 
+			// The user may use createPseudo to indicate that
+			// arguments are needed to create the filter function
+			// just as Sizzle does
 			if ( fn[ expando ] ) {
 				return fn( argument );
 			}
 
+			// But maintain support for old signatures
 			if ( fn.length > 1 ) {
 				args = [ pseudo, pseudo, "", argument ];
 				return Expr.setFilters.hasOwnProperty( pseudo.toLowerCase() ) ?
@@ -5463,7 +5967,11 @@ Expr = Sizzle.selectors = {
 	},
 
 	pseudos: {
+		// Potentially complex pseudos
 		"not": markFunction(function( selector ) {
+			// Trim the selector passed to compile
+			// to avoid treating leading and trailing
+			// spaces as combinators
 			var input = [],
 				results = [],
 				matcher = compile( selector.replace( rtrim, "$1" ) );
@@ -5474,6 +5982,7 @@ Expr = Sizzle.selectors = {
 						unmatched = matcher( seed, null, xml, [] ),
 						i = seed.length;
 
+					// Match elements unmatched by `matcher`
 					while ( i-- ) {
 						if ( (elem = unmatched[i]) ) {
 							seed[i] = !(matches[i] = elem);
@@ -5499,7 +6008,15 @@ Expr = Sizzle.selectors = {
 			};
 		}),
 
+		// "Whether an element is represented by a :lang() selector
+		// is based solely on the element's language value
+		// being equal to the identifier C,
+		// or beginning with the identifier C immediately followed by "-".
+		// The matching of C against the element's language value is performed case-insensitively.
+		// The identifier C does not have to be a valid language name."
+		// http://www.w3.org/TR/selectors/#lang-pseudo
 		"lang": markFunction( function( lang ) {
+			// lang value must be a valid identifier
 			if ( !ridentifier.test(lang || "") ) {
 				Sizzle.error( "unsupported lang: " + lang );
 			}
@@ -5519,6 +6036,7 @@ Expr = Sizzle.selectors = {
 			};
 		}),
 
+		// Miscellaneous
 		"target": function( elem ) {
 			var hash = window.location && window.location.hash;
 			return hash && hash.slice( 1 ) === elem.id;
@@ -5532,6 +6050,7 @@ Expr = Sizzle.selectors = {
 			return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
 		},
 
+		// Boolean properties
 		"enabled": function( elem ) {
 			return elem.disabled === false;
 		},
@@ -5541,11 +6060,15 @@ Expr = Sizzle.selectors = {
 		},
 
 		"checked": function( elem ) {
+			// In CSS3, :checked should return both checked and selected elements
+			// http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
 			var nodeName = elem.nodeName.toLowerCase();
 			return (nodeName === "input" && !!elem.checked) || (nodeName === "option" && !!elem.selected);
 		},
 
 		"selected": function( elem ) {
+			// Accessing this property makes selected-by-default
+			// options in Safari work properly
 			if ( elem.parentNode ) {
 				elem.parentNode.selectedIndex;
 			}
@@ -5553,7 +6076,13 @@ Expr = Sizzle.selectors = {
 			return elem.selected === true;
 		},
 
+		// Contents
 		"empty": function( elem ) {
+			// http://www.w3.org/TR/selectors/#empty-pseudo
+			// :empty is only affected by element nodes and content nodes(including text(3), cdata(4)),
+			//   not comment, processing instructions, or others
+			// Thanks to Diego Perini for the nodeName shortcut
+			//   Greater than "@" means alpha characters (specifically not starting with "#" or "?")
 			for ( elem = elem.firstChild; elem; elem = elem.nextSibling ) {
 				if ( elem.nodeName > "@" || elem.nodeType === 3 || elem.nodeType === 4 ) {
 					return false;
@@ -5566,6 +6095,7 @@ Expr = Sizzle.selectors = {
 			return !Expr.pseudos["empty"]( elem );
 		},
 
+		// Element/input types
 		"header": function( elem ) {
 			return rheader.test( elem.nodeName );
 		},
@@ -5581,11 +6111,14 @@ Expr = Sizzle.selectors = {
 
 		"text": function( elem ) {
 			var attr;
+			// IE6 and 7 will map elem.type to 'text' for new HTML5 types (search, etc)
+			// use getAttribute instead to test this case
 			return elem.nodeName.toLowerCase() === "input" &&
 				elem.type === "text" &&
 				( (attr = elem.getAttribute("type")) == null || attr.toLowerCase() === elem.type );
 		},
 
+		// Position-in-collection
 		"first": createPositionalPseudo(function() {
 			return [ 0 ];
 		}),
@@ -5660,8 +6193,10 @@ function tokenize( selector, parseOnly ) {
 
 	while ( soFar ) {
 
+		// Comma and first run
 		if ( !matched || (match = rcomma.exec( soFar )) ) {
 			if ( match ) {
+				// Don't consume trailing commas as valid
 				soFar = soFar.slice( match[0].length ) || soFar;
 			}
 			groups.push( tokens = [] );
@@ -5669,15 +6204,18 @@ function tokenize( selector, parseOnly ) {
 
 		matched = false;
 
+		// Combinators
 		if ( (match = rcombinators.exec( soFar )) ) {
 			matched = match.shift();
 			tokens.push({
 				value: matched,
+				// Cast descendant combinators to space
 				type: match[0].replace( rtrim, " " )
 			});
 			soFar = soFar.slice( matched.length );
 		}
 
+		// Filters
 		for ( type in Expr.filter ) {
 			if ( (match = matchExpr[ type ].exec( soFar )) && (!preFilters[ type ] ||
 				(match = preFilters[ type ]( match ))) ) {
@@ -5696,10 +6234,14 @@ function tokenize( selector, parseOnly ) {
 		}
 	}
 
+	// Return the length of the invalid excess
+	// if we're just parsing
+	// Otherwise, throw an error or return tokens
 	return parseOnly ?
 		soFar.length :
 		soFar ?
 			Sizzle.error( selector ) :
+			// Cache the tokens
 			tokenCache( selector, groups ).slice( 0 );
 }
 
@@ -5719,6 +6261,7 @@ function addCombinator( matcher, combinator, base ) {
 		doneName = done++;
 
 	return combinator.first ?
+		// Check against closest ancestor/preceding element
 		function( elem, context, xml ) {
 			while ( (elem = elem[ dir ]) ) {
 				if ( elem.nodeType === 1 || checkNonElements ) {
@@ -5727,10 +6270,12 @@ function addCombinator( matcher, combinator, base ) {
 			}
 		} :
 
+		// Check against all ancestor/preceding elements
 		function( elem, context, xml ) {
 			var data, cache, outerCache,
 				dirkey = dirruns + " " + doneName;
 
+			// We can't set arbitrary data on XML nodes, so they don't benefit from dir caching
 			if ( xml ) {
 				while ( (elem = elem[ dir ]) ) {
 					if ( elem.nodeType === 1 || checkNonElements ) {
@@ -5808,28 +6353,36 @@ function setMatcher( preFilter, selector, matcher, postFilter, postFinder, postS
 			postMap = [],
 			preexisting = results.length,
 
+			// Get initial elements from seed or context
 			elems = seed || multipleContexts( selector || "*", context.nodeType ? [ context ] : context, [] ),
 
+			// Prefilter to get matcher input, preserving a map for seed-results synchronization
 			matcherIn = preFilter && ( seed || !selector ) ?
 				condense( elems, preMap, preFilter, context, xml ) :
 				elems,
 
 			matcherOut = matcher ?
+				// If we have a postFinder, or filtered seed, or non-seed postFilter or preexisting results,
 				postFinder || ( seed ? preFilter : preexisting || postFilter ) ?
 
+					// ...intermediate processing is necessary
 					[] :
 
+					// ...otherwise use results directly
 					results :
 				matcherIn;
 
+		// Find primary matches
 		if ( matcher ) {
 			matcher( matcherIn, matcherOut, context, xml );
 		}
 
+		// Apply postFilter
 		if ( postFilter ) {
 			temp = condense( matcherOut, postMap );
 			postFilter( temp, [], context, xml );
 
+			// Un-match failing elements by moving them back to matcherIn
 			i = temp.length;
 			while ( i-- ) {
 				if ( (elem = temp[i]) ) {
@@ -5841,16 +6394,19 @@ function setMatcher( preFilter, selector, matcher, postFilter, postFinder, postS
 		if ( seed ) {
 			if ( postFinder || preFilter ) {
 				if ( postFinder ) {
+					// Get the final matcherOut by condensing this intermediate into postFinder contexts
 					temp = [];
 					i = matcherOut.length;
 					while ( i-- ) {
 						if ( (elem = matcherOut[i]) ) {
+							// Restore matcherIn since elem is not yet a final match
 							temp.push( (matcherIn[i] = elem) );
 						}
 					}
 					postFinder( null, (matcherOut = []), temp, xml );
 				}
 
+				// Move matched elements from seed to results to keep them synchronized
 				i = matcherOut.length;
 				while ( i-- ) {
 					if ( (elem = matcherOut[i]) &&
@@ -5861,6 +6417,7 @@ function setMatcher( preFilter, selector, matcher, postFilter, postFinder, postS
 				}
 			}
 
+		// Add elements to results, through postFinder if defined
 		} else {
 			matcherOut = condense(
 				matcherOut === results ?
@@ -5883,6 +6440,7 @@ function matcherFromTokens( tokens ) {
 		implicitRelative = leadingRelative || Expr.relative[" "],
 		i = leadingRelative ? 1 : 0,
 
+		// The foundational matcher ensures that elements are reachable from top-level context(s)
 		matchContext = addCombinator( function( elem ) {
 			return elem === checkContext;
 		}, implicitRelative, true ),
@@ -5902,7 +6460,9 @@ function matcherFromTokens( tokens ) {
 		} else {
 			matcher = Expr.filter[ tokens[i].type ].apply( null, tokens[i].matches );
 
+			// Return special upon seeing a positional matcher
 			if ( matcher[ expando ] ) {
+				// Find the next relative operator (if any) for proper handling
 				j = ++i;
 				for ( ; j < len; j++ ) {
 					if ( Expr.relative[ tokens[j].type ] ) {
@@ -5912,6 +6472,7 @@ function matcherFromTokens( tokens ) {
 				return setMatcher(
 					i > 1 && elementMatcher( matchers ),
 					i > 1 && toSelector(
+						// If the preceding token was a descendant combinator, insert an implicit any-element `*`
 						tokens.slice( 0, i - 1 ).concat({ value: tokens[ i - 2 ].type === " " ? "*" : "" })
 					).replace( rtrim, "$1" ),
 					matcher,
@@ -5928,6 +6489,7 @@ function matcherFromTokens( tokens ) {
 }
 
 function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
+	// A counter to specify which element is currently being matched
 	var matcherCachedRuns = 0,
 		bySet = setMatchers.length > 0,
 		byElement = elementMatchers.length > 0,
@@ -5939,7 +6501,9 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				unmatched = seed && [],
 				outermost = expandContext != null,
 				contextBackup = outermostContext,
+				// We must always have either seed elements or context
 				elems = seed || byElement && Expr.find["TAG"]( "*", expandContext && context.parentNode || context ),
+				// Use integer dirruns iff this is the outermost matcher
 				dirrunsUnique = (dirruns += contextBackup == null ? 1 : Math.random() || 0.1);
 
 			if ( outermost ) {
@@ -5947,6 +6511,8 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				cachedruns = matcherCachedRuns;
 			}
 
+			// Add elements passing elementMatchers directly to results
+			// Keep `i` a string if there are no elements so `matchedCount` will be "00" below
 			for ( ; (elem = elems[i]) != null; i++ ) {
 				if ( byElement && elem ) {
 					j = 0;
@@ -5962,17 +6528,21 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 					}
 				}
 
+				// Track unmatched elements for set filters
 				if ( bySet ) {
+					// They will have gone through all possible matchers
 					if ( (elem = !matcher && elem) ) {
 						matchedCount--;
 					}
 
+					// Lengthen the array for every element, matched or not
 					if ( seed ) {
 						unmatched.push( elem );
 					}
 				}
 			}
 
+			// Apply set filters to unmatched elements
 			matchedCount += i;
 			if ( bySet && i !== matchedCount ) {
 				j = 0;
@@ -5981,6 +6551,7 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				}
 
 				if ( seed ) {
+					// Reintegrate element matches to eliminate the need for sorting
 					if ( matchedCount > 0 ) {
 						while ( i-- ) {
 							if ( !(unmatched[i] || setMatched[i]) ) {
@@ -5989,11 +6560,14 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 						}
 					}
 
+					// Discard index placeholder values to get only actual matches
 					setMatched = condense( setMatched );
 				}
 
+				// Add matches to results
 				push.apply( results, setMatched );
 
+				// Seedless set matches succeeding multiple successful matchers stipulate sorting
 				if ( outermost && !seed && setMatched.length > 0 &&
 					( matchedCount + setMatchers.length ) > 1 ) {
 
@@ -6001,6 +6575,7 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 				}
 			}
 
+			// Override manipulation of globals by nested matchers
 			if ( outermost ) {
 				dirruns = dirrunsUnique;
 				outermostContext = contextBackup;
@@ -6021,6 +6596,7 @@ compile = Sizzle.compile = function( selector, group /* Internal Use Only */ ) {
 		cached = compilerCache[ selector + " " ];
 
 	if ( !cached ) {
+		// Generate a function of recursive functions that can be used to check each element
 		if ( !group ) {
 			group = tokenize( selector );
 		}
@@ -6034,6 +6610,7 @@ compile = Sizzle.compile = function( selector, group /* Internal Use Only */ ) {
 			}
 		}
 
+		// Cache the compiled function
 		cached = compilerCache( selector, matcherFromGroupMatchers( elementMatchers, setMatchers ) );
 	}
 	return cached;
@@ -6053,8 +6630,10 @@ function select( selector, context, results, seed ) {
 		match = tokenize( selector );
 
 	if ( !seed ) {
+		// Try to minimize operations if there is only one group
 		if ( match.length === 1 ) {
 
+			// Take a shortcut and set the context if the root selector is an ID
 			tokens = match[0] = match[0].slice( 0 );
 			if ( tokens.length > 2 && (token = tokens[0]).type === "ID" &&
 					support.getById && context.nodeType === 9 && documentIsHTML &&
@@ -6067,19 +6646,23 @@ function select( selector, context, results, seed ) {
 				selector = selector.slice( tokens.shift().value.length );
 			}
 
+			// Fetch a seed set for right-to-left matching
 			i = matchExpr["needsContext"].test( selector ) ? 0 : tokens.length;
 			while ( i-- ) {
 				token = tokens[i];
 
+				// Abort if we hit a combinator
 				if ( Expr.relative[ (type = token.type) ] ) {
 					break;
 				}
 				if ( (find = Expr.find[ type ]) ) {
+					// Search, expanding context for leading sibling combinators
 					if ( (seed = find(
 						token.matches[0].replace( runescape, funescape ),
 						rsibling.test( tokens[0].type ) && context.parentNode || context
 					)) ) {
 
+						// If seed is empty or no tokens remain, we can return early
 						tokens.splice( i, 1 );
 						selector = seed.length && toSelector( tokens );
 						if ( !selector ) {
@@ -6094,6 +6677,8 @@ function select( selector, context, results, seed ) {
 		}
 	}
 
+	// Compile and execute a filtering function
+	// Provide `match` to avoid retokenization if we modified the selector above
 	compile( selector, match )(
 		seed,
 		context,
@@ -6112,6 +6697,7 @@ support.detectDuplicates = hasDuplicate;
 setDocument();
 
 support.sortDetached = assert(function( div1 ) {
+	// Should return 1, but returns 4 (following)
 	return div1.compareDocumentPosition( document.createElement("div") ) & 1;
 });
 
@@ -6188,10 +6774,14 @@ var Form = {
   },
 
   serializeElements: function(elements, options) {
+    // An earlier version accepted a boolean second parameter (hash) where
+    // the default if omitted was false; respect that, but if they pass in an
+    // options object (e.g., the new signature) but don't specify the hash option,
+    // default true, as that's the new preferred approach.
     if (typeof options != 'object') options = { hash: !!options };
     else if (Object.isUndefined(options.hash)) options.hash = true;
     var key, value, submitted = false, submit = options.submit, accumulator, initial;
-
+    
     if (options.hash) {
       initial = {};
       accumulator = function(result, key, value) {
@@ -6206,16 +6796,20 @@ var Form = {
       accumulator = function(result, key, values) {
         if (!Object.isArray(values)) {values = [values];}
         if (!values.length) {return result;}
+        // According to the spec, spaces should be '+' rather than '%20'.
         var encodedKey = encodeURIComponent(key).gsub(/%20/, '+');
         return result + (result ? "&" : "") + values.map(function (value) {
+          // Normalize newlines as \r\n because the HTML spec says newlines should
+          // be encoded as CRLFs.
           value = value.gsub(/(\r)?\n/, '\r\n');
           value = encodeURIComponent(value);
+          // According to the spec, spaces should be '+' rather than '%20'.
           value = value.gsub(/%20/, '+');
           return encodedKey + "=" + value;
         }).join("&");
       };
     }
-
+    
     return elements.inject(initial, function(result, element) {
       if (!element.disabled && element.name) {
         key = element.name; value = $(element).getValue();
@@ -6234,11 +6828,11 @@ Form.Methods = {
     return Form.serializeElements(Form.getElements(form), options);
   },
 
-
+  
   getElements: function(form) {
     var elements = $(form).getElementsByTagName('*');
     var element, results = [], serializers = Form.Element.Serializers;
-
+    
     for (var i = 0; element = elements[i]; i++) {
       if (serializers[element.tagName.toLowerCase()])
         results.push(Element.extend(element));
@@ -6407,22 +7001,22 @@ Form.Element.Serializers = (function() {
         return valueSelector(element, value);
     }
   }
-
+  
   function inputSelector(element, value) {
     if (Object.isUndefined(value))
       return element.checked ? element.value : null;
-    else element.checked = !!value;
+    else element.checked = !!value;    
   }
-
+  
   function valueSelector(element, value) {
     if (Object.isUndefined(value)) return element.value;
     else element.value = value;
   }
-
+  
   function select(element, value) {
     if (Object.isUndefined(value))
       return (element.type === 'select-one' ? selectOne : selectMany)(element);
-
+       
     var opt, currentValue, single = !Object.isArray(value);
     for (var i = 0, length = element.length; i < length; i++) {
       opt = element.options[i];
@@ -6436,12 +7030,12 @@ Form.Element.Serializers = (function() {
       else opt.selected = value.include(currentValue);
     }
   }
-
+  
   function selectOne(element) {
     var index = element.selectedIndex;
     return index >= 0 ? optionValue(element.options[index]) : null;
   }
-
+  
   function selectMany(element) {
     var values, length = element.length;
     if (!length) return null;
@@ -6452,11 +7046,11 @@ Form.Element.Serializers = (function() {
     }
     return values;
   }
-
+  
   function optionValue(opt) {
     return Element.hasAttribute(opt, 'value') ? opt.value : opt.text;
   }
-
+  
   return {
     input:         input,
     inputSelector: inputSelector,
@@ -6558,7 +7152,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
   var docEl = document.documentElement;
   var MOUSEENTER_MOUSELEAVE_EVENTS_SUPPORTED = 'onmouseenter' in docEl
    && 'onmouseleave' in docEl;
-
+  
   var Event = {
     KEY_BACKSPACE: 8,
     KEY_TAB:       9,
@@ -6575,20 +7169,34 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     KEY_PAGEDOWN: 34,
     KEY_INSERT:   45
   };
-
+  
+  // We need to support three different event "modes":
+  //  1. browsers with only DOM L2 Events (WebKit, FireFox);
+  //  2. browsers with only IE's legacy events system (IE 6-8);
+  //  3. browsers with _both_ systems (IE 9 and arguably Opera).
+  //
+  // Groups 1 and 2 are easy; group three is trickier.
 
   var isIELegacyEvent = function(event) { return false; };
 
   if (window.attachEvent) {
     if (window.addEventListener) {
+      // Both systems are supported. We need to decide at runtime.
+      // (Though Opera supports both systems, the event object appears to be
+      // the same no matter which system is used. That means that this function
+      // will always return `true` in Opera, but that's OK; it keeps us from
+      // having to do a browser sniff.)
       isIELegacyEvent = function(event) {
         return !(event instanceof window.Event);
       };
     } else {
+      // No support for DOM L2 events. All events will be legacy.
       isIELegacyEvent = function(event) { return true; };
     }
   }
-
+  
+  // The two systems have different ways of indicating which button was used
+  // for a mouse event.
   var _isButton;
 
   function _isButtonForDOMEvents(event, code) {
@@ -6600,6 +7208,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     return event.button === legacyButtonMap[code];
   }
 
+  // In WebKit we have to account for when the user holds down the "meta" key.
   function _isButtonForWebKit(event, code) {
     switch (code) {
       case 0: return event.which == 1 && !event.metaKey;
@@ -6611,8 +7220,10 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
 
   if (window.attachEvent) {
     if (!window.addEventListener) {
-      _isButton = _isButtonForLegacyEvents;
+      // Legacy IE events only.
+      _isButton = _isButtonForLegacyEvents;      
     } else {
+      // Both systems are supported; decide at runtime.
       _isButton = function(event, code) {
         return isIELegacyEvent(event) ? _isButtonForLegacyEvents(event, code) :
          _isButtonForDOMEvents(event, code);
@@ -6623,17 +7234,20 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
   } else {
     _isButton = _isButtonForDOMEvents;
   }
-
+  
   function isLeftClick(event)   { return _isButton(event, 0) }
 
   function isMiddleClick(event) { return _isButton(event, 1) }
 
   function isRightClick(event)  { return _isButton(event, 2) }
-
+  
   function element(event) {
+    // The public version of `Event.element` is a thin wrapper around the
+    // private `_element` method below. We do this so that we can use it
+    // internally as `_element` without having to extend the node.
     return Element.extend(_element(event));
   }
-
+  
   function _element(event) {
     event = Event.extend(event);
 
@@ -6641,12 +7255,17 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
      currentTarget = event.currentTarget;
 
     if (currentTarget && currentTarget.tagName) {
+      // Firefox screws up the "click" event when moving between radio buttons
+      // via arrow keys. It also screws up the "load" and "error" events on images,
+      // reporting the document as the target instead of the original image.
       if (type === 'load' || type === 'error' ||
         (type === 'click' && currentTarget.tagName.toLowerCase() === 'input'
           && currentTarget.type === 'radio'))
             node = currentTarget;
     }
 
+    // Fix a Safari bug where a text node gets passed as the target of an
+    // anchor click rather than the anchor itself.
     return node.nodeType == Node.TEXT_NODE ? node.parentNode : node;
   }
 
@@ -6659,7 +7278,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       element = element.parentNode;
     }
   }
-
+  
   function pointer(event) {
     return { x: pointerX(event), y: pointerY(event) };
   }
@@ -6688,6 +7307,8 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     event.preventDefault();
     event.stopPropagation();
 
+    // Set a "stopped" property so that a custom event can be inspected
+    // after the fact to determine whether or not it was stopped.
     event.stopped = true;
   }
 
@@ -6707,12 +7328,15 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     stop: stop
   };
 
+  // Compile the list of methods that get extended onto Events.
   var methods = Object.keys(Event.Methods).inject({ }, function(m, name) {
     m[name] = Event.Methods[name].methodize();
     return m;
   });
 
   if (window.attachEvent) {
+    // For IE's event system, we need to do some work to make the event
+    // object behave like a standard event object.
     function _relatedTarget(event) {
       var element;
       switch (event.type) {
@@ -6730,69 +7354,86 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       return Element.extend(element);
     }
 
+    // These methods should be added _only_ to legacy IE event objects.
     var additionalMethods = {
       stopPropagation: function() { this.cancelBubble = true },
       preventDefault:  function() { this.returnValue = false },
       inspect: function() { return '[object Event]' }
     };
 
+    // IE's method for extending events.
     Event.extend = function(event, element) {
       if (!event) return false;
-
+      
+      // If it's not a legacy event, it doesn't need extending.
       if (!isIELegacyEvent(event)) return event;
 
+      // Mark this event so we know not to extend a second time.
       if (event._extendedByPrototype) return event;
       event._extendedByPrototype = Prototype.emptyFunction;
-
+      
       var pointer = Event.pointer(event);
 
+      // The optional `element` argument gives us a fallback value for the
+      // `target` property in case IE doesn't give us through `srcElement`.
       Object.extend(event, {
         target: event.srcElement || element,
         relatedTarget: _relatedTarget(event),
         pageX:  pointer.x,
         pageY:  pointer.y
       });
-
+      
       Object.extend(event, methods);
       Object.extend(event, additionalMethods);
-
+      
       return event;
     };
   } else {
+    // Only DOM events, so no manual extending necessary.
     Event.extend = Prototype.K;
   }
-
+  
   if (window.addEventListener) {
+    // In all browsers that support DOM L2 Events, we can augment
+    // `Event.prototype` directly.
     Event.prototype = window.Event.prototype || document.createEvent('HTMLEvents').__proto__;
     Object.extend(Event.prototype, methods);
   }
-
+  
+  //
+  // EVENT REGISTRY
+  //
   var EVENT_TRANSLATIONS = {
     mouseenter: 'mouseover',
     mouseleave: 'mouseout'
   };
-
+  
   function getDOMEventName(eventName) {
     return EVENT_TRANSLATIONS[eventName] || eventName;
   }
-
+  
   if (MOUSEENTER_MOUSELEAVE_EVENTS_SUPPORTED)
     getDOMEventName = Prototype.K;
-
+  
   function getUniqueElementID(element) {
     if (element === window) return 0;
 
+    // Need to use actual `typeof` operator to prevent errors in some
+    // environments when accessing node expandos.
     if (typeof element._prototypeUID === 'undefined')
       element._prototypeUID = Element.Storage.UID++;
     return element._prototypeUID;
   }
-
+  
+  // In Internet Explorer, DOM nodes have a `uniqueID` property. Saves us
+  // from inventing our own.
   function getUniqueElementID_IE(element) {
     if (element === window) return 0;
+    // The document object's `uniqueID` property changes each time you read it.
     if (element == document) return 1;
     return element.uniqueID;
   }
-
+  
   if ('uniqueID' in DIV)
     getUniqueElementID = getUniqueElementID_IE;
 
@@ -6802,6 +7443,8 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
 
   Event._isCustomEvent = isCustomEvent;
 
+  // These two functions take an optional UID as a second argument so that we
+  // can skip lookup if we've already got the element's UID.
   function getRegistryForElement(element, uid) {
     var CACHE = GLOBAL.Event.cache;
     if (Object.isUndefined(uid))
@@ -6809,23 +7452,28 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     if (!CACHE[uid]) CACHE[uid] = { element: element };
     return CACHE[uid];
   }
-
+  
   function destroyRegistryForElement(element, uid) {
     if (Object.isUndefined(uid))
       uid = getUniqueElementID(element);
     delete GLOBAL.Event.cache[uid];
   }
-
-
+  
+  // The `register` and `unregister` functions handle creating the responder
+  // and managing an event registry. They _don't_ attach and detach the
+  // listeners themselves.
+  
+  // Add an event to the element's event registry.
   function register(element, eventName, handler) {
     var registry = getRegistryForElement(element);
     if (!registry[eventName]) registry[eventName] = [];
     var entries = registry[eventName];
 
+    // Make sure this handler isn't already attached.
     var i = entries.length;
     while (i--)
       if (entries[i].handler === handler) return null;
-
+      
     var uid = getUniqueElementID(element);
     var responder = GLOBAL.Event._createResponder(uid, eventName, handler);
     var entry = {
@@ -6833,15 +7481,16 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       handler:   handler
     };
 
-    entries.push(entry);
+    entries.push(entry);    
     return entry;
   }
-
+  
+  // Remove an event from the element's event registry.
   function unregister(element, eventName, handler) {
     var registry = getRegistryForElement(element);
     var entries = registry[eventName];
     if (!entries) return;
-
+    
     var i = entries.length, entry;
     while (i--) {
       if (entries[i].handler === handler) {
@@ -6849,9 +7498,12 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
         break;
       }
     }
-
+    
+    // This handler wasn't in the collection, so it doesn't need to be
+    // unregistered.
     if (!entry) return;
 
+    // Remove the entry from the collection;
     var index = entries.indexOf(entry);
     entries.splice(index, 1);
 
@@ -6859,24 +7511,27 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       stopObservingEventName(element, eventName);
     }
     return entry;
-  }
-
-
+  }  
+  
+  
+  //
+  // EVENT OBSERVING
+  //
   function observe(element, eventName, handler) {
     element = $(element);
     var entry = register(element, eventName, handler);
-
+    
     if (entry === null) return element;
 
-    var responder = entry.responder;
+    var responder = entry.responder;    
     if (isCustomEvent(eventName))
       observeCustomEvent(element, eventName, responder);
     else
       observeStandardEvent(element, eventName, responder);
-
+      
     return element;
   }
-
+  
   function observeStandardEvent(element, eventName, responder) {
     var actualEventName = getDOMEventName(eventName);
     if (element.addEventListener) {
@@ -6885,47 +7540,49 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       element.attachEvent('on' + actualEventName, responder);
     }
   }
-
+  
   function observeCustomEvent(element, eventName, responder) {
     if (element.addEventListener) {
       element.addEventListener('dataavailable', responder, false);
     } else {
+      // We observe two IE-proprietarty events: one for custom events that
+      // bubble and one for custom events that do not bubble.
       element.attachEvent('ondataavailable', responder);
       element.attachEvent('onlosecapture',   responder);
     }
   }
-
+  
   function stopObserving(element, eventName, handler) {
     element = $(element);
     var handlerGiven = !Object.isUndefined(handler),
      eventNameGiven = !Object.isUndefined(eventName);
-
+     
     if (!eventNameGiven && !handlerGiven) {
       stopObservingElement(element);
       return element;
     }
-
+    
     if (!handlerGiven) {
       stopObservingEventName(element, eventName);
       return element;
     }
-
+    
     var entry = unregister(element, eventName, handler);
-
-    if (!entry) return element;
+    
+    if (!entry) return element; 
     removeEvent(element, eventName, entry.responder);
     return element;
   }
-
+  
   function stopObservingStandardEvent(element, eventName, responder) {
     var actualEventName = getDOMEventName(eventName);
     if (element.removeEventListener) {
-      element.removeEventListener(actualEventName, responder, false);
+      element.removeEventListener(actualEventName, responder, false);      
     } else {
       element.detachEvent('on' + actualEventName, responder);
     }
   }
-
+  
   function stopObservingCustomEvent(element, eventName, responder) {
     if (element.removeEventListener) {
       element.removeEventListener('dataavailable', responder, false);
@@ -6934,17 +7591,27 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       element.detachEvent('onlosecapture',   responder);
     }
   }
+  
 
+  // The `stopObservingElement` and `stopObservingEventName` functions are
+  // for bulk removal of event listeners. We use them rather than recurse
+  // back into `stopObserving` to avoid touching the registry more often than
+  // necessary.
 
-
+  // Stop observing _all_ listeners on an element.
   function stopObservingElement(element) {
+    // Do a manual registry lookup because we don't want to create a registry
+    // if one doesn't exist.
     var uid = getUniqueElementID(element), registry = GLOBAL.Event.cache[uid];
+    // This way we can return early if there is no registry.
     if (!registry) return;
 
     destroyRegistryForElement(element, uid);
 
     var entries, i;
     for (var eventName in registry) {
+      // Explicitly skip elements so we don't accidentally find one with a
+      // `length` property.
       if (eventName === 'element') continue;
 
       entries = registry[eventName];
@@ -6953,13 +7620,14 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
         removeEvent(element, eventName, entries[i].responder);
     }
   }
-
+  
+  // Stop observing all listeners of a certain event name on an element.
   function stopObservingEventName(element, eventName) {
     var registry = getRegistryForElement(element);
     var entries = registry[eventName];
     if (!entries) return;
     delete registry[eventName];
-
+    
     var i = entries.length;
     while (i--)
       removeEvent(element, eventName, entries[i].responder);
@@ -6969,61 +7637,64 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       return; // There is another registered event
     }
 
+    // No other events for the element, destroy the registry:
     destroyRegistryForElement(element);
   }
 
-
+  
   function removeEvent(element, eventName, handler) {
     if (isCustomEvent(eventName))
       stopObservingCustomEvent(element, eventName, handler);
     else
       stopObservingStandardEvent(element, eventName, handler);
   }
-
-
-
+  
+  
+  
+  // FIRING CUSTOM EVENTS
   function getFireTarget(element) {
     if (element !== document) return element;
     if (document.createEvent && !element.dispatchEvent)
       return document.documentElement;
     return element;
   }
-
+  
   function fire(element, eventName, memo, bubble) {
     element = getFireTarget($(element));
-    if (Object.isUndefined(bubble)) bubble = true;
+    if (Object.isUndefined(bubble)) bubble = true;      
     memo = memo || {};
-
+      
     var event = fireEvent(element, eventName, memo, bubble);
     return Event.extend(event);
   }
-
+  
   function fireEvent_DOM(element, eventName, memo, bubble) {
     var event = document.createEvent('HTMLEvents');
     event.initEvent('dataavailable', bubble, true);
-
+    
     event.eventName = eventName;
     event.memo = memo;
-
+    
     element.dispatchEvent(event);
     return event;
   }
-
+  
   function fireEvent_IE(element, eventName, memo, bubble) {
     var event = document.createEventObject();
     event.eventType = bubble ? 'ondataavailable' : 'onlosecapture';
-
+    
     event.eventName = eventName;
     event.memo = memo;
-
-    element.fireEvent(event.eventType, event);
+    
+    element.fireEvent(event.eventType, event);    
     return event;
   }
-
+  
   var fireEvent = document.createEvent ? fireEvent_DOM : fireEvent_IE;
-
-
-
+  
+  
+  // EVENT DELEGATION
+  
   Event.Handler = Class.create({
     initialize: function(element, eventName, selector, callback) {
       this.element   = $(element);
@@ -7032,33 +7703,33 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       this.callback  = callback;
       this.handler   = this.handleEvent.bind(this);
     },
-
+    
 
     start: function() {
       Event.observe(this.element, this.eventName, this.handler);
       return this;
     },
-
+    
     stop: function() {
       Event.stopObserving(this.element, this.eventName, this.handler);
       return this;
     },
-
+    
     handleEvent: function(event) {
       var element = Event.findElement(event, this.selector);
       if (element) this.callback.call(this.element, event, element);
     }
   });
-
+  
   function on(element, eventName, selector, callback) {
     element = $(element);
     if (Object.isFunction(selector) && Object.isUndefined(callback)) {
       callback = selector, selector = null;
     }
-
+    
     return new Event.Handler(element, eventName, selector, callback).start();
   }
-
+  
   Object.extend(Event, Event.Methods);
 
   Object.extend(Event, {
@@ -7074,7 +7745,7 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     observe:       observe,
 
     stopObserving: stopObserving,
-
+    
     on:            on
   });
 
@@ -7084,88 +7755,96 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
     observe:       observe.methodize(),
 
     stopObserving: stopObserving.methodize(),
-
+    
     on:            on.methodize(),
 
     loaded:        false
   });
 
+  // Export to the global scope.
   if (GLOBAL.Event) Object.extend(window.Event, Event);
   else GLOBAL.Event = Event;
-
+  
   GLOBAL.Event.cache = {};
-
+    
   function destroyCache_IE() {
     GLOBAL.Event.cache = null;
   }
-
+  
   if (window.attachEvent)
     window.attachEvent('onunload', destroyCache_IE);
-
+    
   DIV = null;
   docEl = null;
 })(this);
 
-(function(GLOBAL) {
+(function(GLOBAL) {  
   /* Code for creating leak-free event responders is based on work by
    John-David Dalton. */
-
+  
   var docEl = document.documentElement;
   var MOUSEENTER_MOUSELEAVE_EVENTS_SUPPORTED = 'onmouseenter' in docEl
     && 'onmouseleave' in docEl;
-
+    
   function isSimulatedMouseEnterLeaveEvent(eventName) {
     return !MOUSEENTER_MOUSELEAVE_EVENTS_SUPPORTED &&
      (eventName === 'mouseenter' || eventName === 'mouseleave');
   }
-
-  function createResponder(uid, eventName, handler) {
+  
+  // The functions for creating responders accept the element's UID rather
+  // than the element itself. This way, there are _no_ DOM objects inside the
+  // closure we create, meaning there's no need to unregister event listeners
+  // on unload.
+  function createResponder(uid, eventName, handler) {    
     if (Event._isCustomEvent(eventName))
-      return createResponderForCustomEvent(uid, eventName, handler);
+      return createResponderForCustomEvent(uid, eventName, handler);      
     if (isSimulatedMouseEnterLeaveEvent(eventName))
       return createMouseEnterLeaveResponder(uid, eventName, handler);
-
+    
     return function(event) {
       if (!Event.cache) return;
-
+      
       var element = Event.cache[uid].element;
       Event.extend(event, element);
       handler.call(element, event);
     };
   }
-
+  
   function createResponderForCustomEvent(uid, eventName, handler) {
     return function(event) {
       var element = Event.cache[uid] !== undefined ? Event.cache[uid].element : event.target;
 
       if (Object.isUndefined(event.eventName))
         return false;
-
+        
       if (event.eventName !== eventName)
         return false;
-
+        
       Event.extend(event, element);
       handler.call(element, event);
     };
   }
-
+  
   function createMouseEnterLeaveResponder(uid, eventName, handler) {
     return function(event) {
       var element = Event.cache[uid].element;
-
+      
       Event.extend(event, element);
       var parent = event.relatedTarget;
-
+      
+      // Walk up the DOM tree to see if the related target is a descendant of
+      // the original element. If it is, we ignore the event to match the
+      // behavior of mouseenter/mouseleave.
       while (parent && parent !== element) {
         try { parent = parent.parentNode; }
         catch(e) { parent = element; }
       }
-
-      if (parent === element) return;
+      
+      if (parent === element) return;      
       handler.call(element, event);
     }
   }
-
+  
   GLOBAL.Event._createResponder = createResponder;
   docEl = null;
 })(this);
@@ -7173,23 +7852,23 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
 (function(GLOBAL) {
   /* Support for the DOMContentLoaded event is based on work by Dan Webb,
      Matthias Miller, Dean Edwards, John Resig, and Diego Perini. */
-
+  
   var TIMER;
-
+  
   function fireContentLoadedEvent() {
     if (document.loaded) return;
     if (TIMER) window.clearTimeout(TIMER);
     document.loaded = true;
     document.fire('dom:loaded');
   }
-
+  
   function checkReadyState() {
     if (document.readyState === 'complete') {
       document.detachEvent('onreadystatechange', checkReadyState);
       fireContentLoadedEvent();
     }
   }
-
+  
   function pollDoScroll() {
     try {
       document.documentElement.doScroll('left');
@@ -7197,23 +7876,29 @@ Form.EventObserver = Class.create(Abstract.EventObserver, {
       TIMER = pollDoScroll.defer();
       return;
     }
-
+    
     fireContentLoadedEvent();
   }
 
 
   if (document.readyState === 'complete') {
+    // We must have been loaded asynchronously, because the DOMContentLoaded
+    // event has already fired. We can just fire `dom:loaded` and be done
+    // with it.
     fireContentLoadedEvent();
     return;
   }
-
+  
   if (document.addEventListener) {
+    // All browsers that support DOM L2 Events support DOMContentLoaded,
+    // including IE 9.
     document.addEventListener('DOMContentLoaded', fireContentLoadedEvent, false);
   } else {
     document.attachEvent('onreadystatechange', checkReadyState);
     if (window == top) TIMER = pollDoScroll.defer();
   }
-
+  
+  // Worst-case fallback.
   Event.observe(window, 'load', fireContentLoadedEvent);
 })(this);
 
@@ -7248,8 +7933,13 @@ var Insertion = {
 var $continue = new Error('"throw $continue" is deprecated, use "return" instead');
 
 var Position = {
+  // set to true if needed, warning: firefox performance problems
+  // NOT neeeded for page scrolling, only if draggable contained in
+  // scrollable elements
   includeScrollOffsets: false,
 
+  // must be called before calling withinIncludingScrolloffset, every time the
+  // page is scrolled
   prepare: function() {
     this.deltaX =  window.pageXOffset
                 || document.documentElement.scrollLeft
@@ -7261,6 +7951,7 @@ var Position = {
                 || 0;
   },
 
+  // caches x/y coordinate pair to use with overlap
   within: function(element, x, y) {
     if (this.includeScrollOffsets)
       return this.withinIncludingScrolloffsets(element, x, y);
@@ -7287,6 +7978,7 @@ var Position = {
             this.xcomp <  this.offset[0] + element.offsetWidth);
   },
 
+  // within must be called directly before
   overlap: function(mode, element) {
     if (!mode) return 0;
     if (mode == 'vertical')
@@ -7297,6 +7989,7 @@ var Position = {
         element.offsetWidth;
   },
 
+  // Deprecation layer -- use newer Element methods now (1.5.2).
 
   cumulativeOffset: Element.Methods.cumulativeOffset,
 
@@ -7401,19 +8094,19 @@ Object.extend(Element.ClassNames.prototype, Enumerable);
     initialize: function(expression) {
       this.expression = expression.strip();
     },
-
+  
     findElements: function(rootElement) {
       return Prototype.Selector.select(this.expression, rootElement);
     },
-
+  
     match: function(element) {
       return Prototype.Selector.match(element, this.expression);
     },
-
+  
     toString: function() {
       return this.expression;
     },
-
+  
     inspect: function() {
       return "#<Selector: " + this.expression + ">";
     }
@@ -7423,7 +8116,7 @@ Object.extend(Element.ClassNames.prototype, Enumerable);
     matchElements: function(elements, expression) {
       var match = Prototype.Selector.match,
           results = [];
-
+          
       for (var i = 0, length = elements.length; i < length; i++) {
         var element = elements[i];
         if (match(element, expression)) {
@@ -7436,6 +8129,7 @@ Object.extend(Element.ClassNames.prototype, Enumerable);
     findElement: function(elements, expression, index) {
       index = index || 0;
       var matchIndex = 0, element;
+      // Match each element individually, since Sizzle.matches does not preserve order
       for (var i = 0, length = elements.length; i < length; i++) {
         element = elements[i];
         if (Prototype.Selector.match(element, expression) && index === matchIndex++) {
@@ -7449,4 +8143,4 @@ Object.extend(Element.ClassNames.prototype, Enumerable);
       return Prototype.Selector.select(selector, element || document);
     }
   });
-})();
+})();
