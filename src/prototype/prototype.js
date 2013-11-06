@@ -1,5 +1,6 @@
-//= compat
-/*  Prototype JavaScript framework, version <%= PROTOTYPE_VERSION %>
+/**
+ * @preserve
+ * Prototype JavaScript framework, version <%= PROTOTYPE_VERSION %>
  *  (c) 2005-2010 Sam Stephenson
  *
  *  Prototype is freely distributable under the terms of an MIT-style license.
