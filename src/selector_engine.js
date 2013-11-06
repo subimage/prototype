@@ -1,4 +1,3 @@
-//= compat
 //= require "sizzle"
 
 Prototype._original_property = window.Sizzle;

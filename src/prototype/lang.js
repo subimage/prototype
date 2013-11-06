@@ -1,4 +1,3 @@
-//= compat
 //= require "lang/class"
 //= require "lang/object"
 //= require "lang/function"

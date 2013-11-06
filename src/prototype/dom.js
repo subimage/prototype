@@ -1,8 +1,7 @@
-//= compat
 //= require "dom/dom"
 //= require "dom/layout"
 //= require "dom/selector"
-//= require <selector_engine>
+//= require "../selector_engine.js"
 //= require "dom/form"
 //= require "dom/event"
 

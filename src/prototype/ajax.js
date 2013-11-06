@@ -1,4 +1,3 @@
-//= compat
 //= require "ajax/ajax"
 //= require "ajax/responders"
 //= require "ajax/base"
