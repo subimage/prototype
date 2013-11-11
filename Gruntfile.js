@@ -72,6 +72,12 @@ module.exports = function(grunt) {
 
 	}
 
+	function generate_docs()
+	{
+
+
+	}
+
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -110,8 +116,12 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('replacevars','Replace Variables in PrototypeJS file',replacevars);
 	grunt.registerTask('gcc_rest',"Run Google Closure Compiler",closure_compile);
+	grunt.registerTask('generate_docs',"Generate Prototype Docs from Source Code",generate_docs);
 
 	grunt.registerTask('test', ['mochacli']);
-	grunt.registerTask('default', ['resolve','replacevars','concat','gcc_rest']);
+	grunt.registerTask('dist', ['resolve','replacevars','concat','gcc_rest']);
+	grunt.registerTask('docs',['resolve','replacevars','generate_docs']);
+
+	grunt.registerTask('default',['test','dist'])
 
 };
