@@ -1,7 +1,18 @@
 {
+  "private": true,
   "name": "prototypejs",
   "version": "1.7.1",
+  "repository": {
+  	"type": "git",
+  	"url" : "https://github.com/jwestbrook/prototype.git"
+  },
+  "scripts": {
+  	"test" : "mocha"
+  },
   "devDependencies": {
+  	"open": "~0.0.4",
+  	"mocha": "~1.14.0",
+  	"mocha-phantomjs": "~3.1.6",
     "grunt": "~0.4.1",
     "grunt-resolve": "~0.1.2",
     "grunt-mocha-cli": "~1.3.0",
