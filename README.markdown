@@ -1,6 +1,8 @@
 Prototype
 =========
 
+[![Build Status](https://travis-ci.org/jwestbrook/prototype.png?branch=master-w-updates)](https://travis-ci.org/jwestbrook/prototype)
+
 #### An object-oriented JavaScript framework ####
 
 Prototype is a JavaScript framework that aims to ease development of dynamic 
