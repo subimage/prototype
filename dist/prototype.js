@@ -1155,7 +1155,8 @@ Array.from = $A;
 (function() {
   var arrayProto = Array.prototype,
       slice = arrayProto.slice,
-      _each = arrayProto.forEach; // use native browser JS 1.6 implementation if available
+      _each = arrayProto.forEach,
+      _entries = arrayProto.entries; // use native browser JS 1.6 implementation if available
 
   function each(iterator, context) {
     for (var i = 0, length = this.length >>> 0; i < length; i++) {
@@ -1439,6 +1440,15 @@ Array.from = $A;
     var every = wrapNative(Array.prototype.every);
   }
   
+
+  function entries() {
+    if (this == null) throw new TypeError();
+
+    return this.map(function(i,index) {
+        return [index,i];
+    });
+  }
+
   // Prototype's `Array#inject` behaves similarly to ES5's `Array#reduce`.
   var _reduce = arrayProto.reduce;
   function inject(memo, iterator) {
@@ -1455,17 +1465,10 @@ Array.from = $A;
     var inject = Enumerable.inject;
   }
 
-  //strip entries method from Enumerable to protect original Array.prototype.entries in ES6
-  var _Enumerable = Object.clone(Enumerable);
-  delete _Enumerable.entries;
-
-  Object.extend(arrayProto, _Enumerable);
+  Object.extend(arrayProto, Enumerable);
 
   if (!arrayProto._reverse)
     arrayProto._reverse = arrayProto.reverse;
-
-  if (!arrayProto.entries)
-    arrayProto.entries = Enumerable.toArray;
 
   Object.extend(arrayProto, {
     _each:     _each,
@@ -1493,7 +1496,8 @@ Array.from = $A;
     clone:     clone,
     toArray:   clone,
     size:      size,
-    inspect:   inspect
+    inspect:   inspect,
+    entries:   _entries || entries
   });
 
   // fix for opera

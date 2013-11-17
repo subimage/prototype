@@ -66,6 +66,11 @@ suite('Array Namespace',function(){
 			}
 		});
 		
+		test(".entries() method",function(){
+			assert.deepEqual([[0, 3], [1, 5], [2, 6], [3, 1], [4, 20]],[3, 5, 6, 1, 20].entries(),"[3, 5, 6, 1, 20].entries() != [[0, 3], [1, 5], [2, 6], [3, 1], [4, 20]]")
+			assert.deepEqual([[0, 'a'], [1, 'b'], [2, 'c']],['a', 'b', 'c'].entries(),"['a', 'b', 'c'].entries() != [[0, 'a'], [1, 'b'], [2, 'c']]")
+		});
+
 		test(".first() method",function(){
 			assert([].first() === undefined,"[].first() != undefined");
 			assert(1 === [1].first(),"[1].first() != 1");
