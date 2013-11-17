@@ -71,7 +71,6 @@ New tests have been written with [MochaJS](http://visionmedia.github.io/mocha/) 
     `$ env BROWSERS=default,chrome,firefox,safari mocha`
  
 
-
 Documentation
 -------------
 
