@@ -104,6 +104,15 @@ module.exports = function(grunt) {
 				dest : 'dist/prototype.js'
 			}
 		},
+		mocha_phantomjs:{
+			options: {
+					'reporter': 'dot'
+			},
+			base: ['test/index.html',
+					'test/domtests.html',
+					'test/selectortests.html',
+					'test/layouttests.html']
+		},
 		mochacli:{
 			all: 'test/test.js'
 		}
@@ -112,12 +121,14 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-resolve');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-mocha-cli');
+	grunt.loadNpmTasks('grunt-mocha-phantomjs');
 
 
 	grunt.registerTask('replacevars','Replace Variables in PrototypeJS file',replacevars);
 	grunt.registerTask('gcc_rest',"Run Google Closure Compiler",closure_compile);
 	grunt.registerTask('generate_docs',"Generate Prototype Docs from Source Code",generate_docs);
 
+//	grunt.registerTask('test', ['mocha_phantomjs']);
 	grunt.registerTask('test', ['mochacli']);
 	grunt.registerTask('dist', ['resolve','replacevars','concat','gcc_rest']);
 	grunt.registerTask('docs',['resolve','replacevars','generate_docs']);
