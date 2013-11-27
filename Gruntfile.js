@@ -78,7 +78,6 @@ module.exports = function(grunt) {
 
 	}
 
-
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 		PROTOTYPE_VERSION : grunt.file.readYAML('src/constants.yml'),
@@ -106,30 +105,33 @@ module.exports = function(grunt) {
 		},
 		mocha_phantomjs:{
 			options: {
-					'reporter': 'dot'
+					'urls'		: [ 'http://localhost:1337/test/ajaxtests.html',
+									'http://localhost:1337/test/formtests.html' ]
 			},
-			base: ['test/index.html',
+			base: [	'test/index.html',
 					'test/domtests.html',
 					'test/selectortests.html',
 					'test/layouttests.html']
-		},
-		mochacli:{
-			all: 'test/test.js'
 		}
 	});
 
 	grunt.loadNpmTasks('grunt-resolve');
 	grunt.loadNpmTasks('grunt-contrib-concat');
-	grunt.loadNpmTasks('grunt-mocha-cli');
 	grunt.loadNpmTasks('grunt-mocha-phantomjs');
 
 
 	grunt.registerTask('replacevars','Replace Variables in PrototypeJS file',replacevars);
 	grunt.registerTask('gcc_rest',"Run Google Closure Compiler",closure_compile);
 	grunt.registerTask('generate_docs',"Generate Prototype Docs from Source Code",generate_docs);
+	grunt.registerTask('runwebserver',"Run Test Webserver",function(){
+		var done = this.async();
+		require('./test/webserver.js').listen(1337, '127.0.0.1',function(){
+			grunt.log.writeln('Web server Started on port 1337.');
+			done();
+		});
+	})
 
-//	grunt.registerTask('test', ['mocha_phantomjs']);
-	grunt.registerTask('test', ['mochacli']);
+	grunt.registerTask('test', ['runwebserver','mocha_phantomjs']);
 	grunt.registerTask('dist', ['resolve','replacevars','concat','gcc_rest']);
 	grunt.registerTask('docs',['resolve','replacevars','generate_docs']);
 
