@@ -104,14 +104,16 @@ module.exports = function(grunt) {
 			}
 		},
 		mocha_phantomjs:{
-			options: {
-					'urls'		: [ 'http://localhost:1337/test/ajaxtests.html',
+			all: {
+				options: {
+						'urls'	: [ 'http://localhost:1337/test/ajaxtests.html',
 									'http://localhost:1337/test/formtests.html' ]
-			},
-			base: [	'test/index.html',
-					'test/domtests.html',
-					'test/selectortests.html',
-					'test/layouttests.html']
+				},
+				src :	['test/index.html',
+						 'test/domtests.html',
+						 'test/selectortests.html',
+						 'test/layouttests.html']
+			}
 		}
 	});
 
