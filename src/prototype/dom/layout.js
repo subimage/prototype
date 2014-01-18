@@ -1130,8 +1130,8 @@
     var valueT = 0, valueL = 0;
     do {
       if(element == document.body){
-        valueT += (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft || 0;
-        valueL += (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop || 0;
+        valueT += (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop || 0;
+        valueL += (window.pageXOffset !== undefined) ? window.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft || 0;
         break;
       } else {
         valueT += element.scrollTop  || 0;
