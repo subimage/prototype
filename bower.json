@@ -21,5 +21,11 @@
     "package.json",
     "Rakefile",
     "README.markdown"
+  ],
+  "keywords": [
+    "prototypejs",
+    "prototype.js",
+    "prototype",
+    "prototypejs.org"
   ]
 }

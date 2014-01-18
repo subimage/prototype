@@ -29,6 +29,8 @@ like so:
 
     <script type="text/javascript" src="/path/to/prototype.js"></script>
 
+Prototype is also available in the [Bower](http://bower.io) registry: `bower install prototype.js`.
+
 ### Building Prototype from source ###
 
 `prototype.js` is a composite file generated from many source files in 
