@@ -1,14 +1,6 @@
 /**
  * @preserve
- * Prototype JavaScript framework, version 1.7.1
- *  (c) 2005-2010 Sam Stephenson
- *
- *  Prototype is freely distributable under the terms of an MIT-style license.
- *  For details, see the Prototype web site: http://www.prototypejs.org/
- *
- *--------------------------------------------------------------------------*/
-/*
- * Prototype JavaScript framework, version 1.7.1
+ * Prototype JavaScript framework, version 1.7.2-beta
  *  (c) 2005-2010 Sam Stephenson
  *
  *  Prototype is freely distributable under the terms of an MIT-style license.
@@ -16,7 +8,7 @@
  *
  *--------------------------------------------------------------------------*/
 var Prototype = {
-  Version: '1.7.1',
+  Version: '1.7.2-beta',
   Browser: (function(){
     var ua = navigator.userAgent;
     // Opera (at least) 8.x+ has "Opera" as a [[Class]] of `window.opera`

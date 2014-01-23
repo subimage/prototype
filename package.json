@@ -1,23 +1,27 @@
 {
   "private": true,
   "name": "prototypejs",
-  "version": "1.7.1",
+  "version": "1.7.2-beta",
   "repository": {
-  	"type": "git",
-  	"url" : "https://github.com/jwestbrook/prototype.git"
+    "type": "git",
+    "url": "https://github.com/jwestbrook/prototype.git"
   },
   "scripts": {
-  	"test" : "grunt test"
+    "test": "grunt test"
   },
   "devDependencies": {
-  	"open": "~0.0.4",
-  	"mocha": "~1.14.0",
-  	"mocha-phantomjs": "~3.1.6",
-    "closurecompiler":"~1.1.4",
+    "open": "~0.0.4",
+    "mocha": "~1.14.0",
+    "mocha-phantomjs": "~3.1.6",
+    "closurecompiler": "~1.1.4",
     "grunt": "~0.4.1",
-    "grunt-cli":"~0.1.11",
+    "grunt-cli": "~0.1.11",
     "grunt-resolve": "~0.1.2",
     "grunt-contrib-concat": "~0.3.0",
-    "grunt-mocha-phantomjs": "~0.3.1"
+    "grunt-mocha-phantomjs": "~0.3.1",
+    "grunt-saucelabs": "~4.1.2",
+    "handlebars": "~1.1.2",
+    "fs.extra": "~1.2.1",
+    "node-markdown": "~0.1.1"
   }
 }
