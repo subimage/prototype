@@ -21,6 +21,10 @@
   <script src="proclaim.js"></script>
 	<script>mocha.setup('tdd')</script>
 	<script>
+    if(typeof console === 'undefined')
+    {
+      var console = {'log' : function() {} };
+    }
     var assert = proclaim;
     function assertenum(varA, varB, msg){
       if(varA.length !== varB.length) throw new Error(msg || 'failed')
