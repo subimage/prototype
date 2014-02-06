@@ -1009,11 +1009,11 @@ suite("DOM Interactions",function(){
     if (!STANDARD_CSS_OPACITY_SUPPORTED) {
       // Run these tests only on older versions of IE. IE9 and 10 dropped
       // support for filters and therefore fail these tests.
-      assert.equal('alpha(opacity=30)', $('op1').getStyle('filter'));
-      assert.equal('progid:DXImageTransform.Microsoft.Blur(strength=10)alpha(opacity=30)', $('op2').getStyle('filter'));
+      assert.equal('alpha(opacity=30)', $('op1').getStyle('filter').strip());
+      assert.equal('progid:DXImageTransform.Microsoft.Blur(strength=10) alpha(opacity=30)', $('op2').getStyle('filter').strip());
       $('op2').setStyle({opacity:''});
-      assert.equal('progid:DXImageTransform.Microsoft.Blur(strength=10)', $('op2').getStyle('filter'));
-      assert.equal('alpha(opacity=0)', $('op3').getStyle('filter'));
+      assert.equal('progid:DXImageTransform.Microsoft.Blur(strength=10)', $('op2').getStyle('filter').strip());
+      assert.equal('alpha(opacity=0)', $('op3').getStyle('filter').strip());
       assert.equal(0.3, $('op4-ie').getStyle('opacity'));
     }
     
