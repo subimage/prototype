@@ -39,6 +39,12 @@ Object.extend(String.prototype, (function() {
     return function(match) { return template.evaluate(match) };
   }
 
+  // In some versions of Chrome, an empty RegExp has "(?:)" as a `source`
+  // property instead of an empty string.
+  function isNonEmptyRegExp(regexp) {
+    return regexp.source && regexp.source !== '(?:)';
+  }
+
   /**
    *  String#gsub(pattern, replacement) -> String
    *
@@ -94,7 +100,7 @@ Object.extend(String.prototype, (function() {
     if (Object.isString(pattern))
       pattern = RegExp.escape(pattern);
 
-    if (!(pattern.length || pattern.source)) {
+    if (!(pattern.length || isNonEmptyRegExp(pattern))) {
       replacement = replacement('');
       return replacement + source.split('').join(replacement) + replacement;
     }

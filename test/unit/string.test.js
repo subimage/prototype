@@ -53,9 +53,8 @@ suite("String Namspace",function(){
       'ウィメンズ2007\nクルーズコレクション'.gsub('\n','<br/>'));
       
     assert.equal(source.gsub('', 'bar'),'barfbarobarobar barbbarobarobar barbbarobarzbar');
-    // disable for now
-    // assert.equal(source.gsub(new RegExp(''), 'bar'),'barfbarobarobar barbbarobarobar barbbarobarzbar');
-    //
+
+    assert.equal(source.gsub(new RegExp(''), 'bar'),'barfbarobarobar barbbarobarobar barbbarobarzbar');
   });
   
   test(".gsub() With Replacement Template String",function() {
