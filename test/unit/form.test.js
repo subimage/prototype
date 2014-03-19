@@ -324,7 +324,7 @@ suite("Form Interactions",function(){
       number: '2'
     };
     assertHashEqual(hash, form.serialize(true));
-});
+  });
   
   test("Form.request()", function(done) {
     var request = $("form").request();
