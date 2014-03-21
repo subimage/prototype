@@ -8,7 +8,9 @@ Ajax.Base = Class.create({
       encoding:     'UTF-8',
       parameters:   '',
       evalJSON:     true,
-      evalJS:       true
+      evalJS:       true,
+      username:     undefined,
+      password:     undefined
     };
     Object.extend(this.options, options || { });
 

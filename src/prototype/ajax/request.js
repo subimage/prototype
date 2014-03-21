@@ -201,8 +201,13 @@ Ajax.Request = Class.create(Ajax.Base, {
       if (this.options.onCreate) this.options.onCreate(response);
       Ajax.Responders.dispatch('onCreate', this, response);
 
-      this.transport.open(this.method.toUpperCase(), this.url,
-        this.options.asynchronous);
+      this.transport.open(
+        this.method.toUpperCase(), 
+        this.url,
+        this.options.asynchronous,
+        this.options.username,
+        this.options.password
+      );
 
       if (this.options.asynchronous) this.respondToReadyState.bind(this).defer(1);
 

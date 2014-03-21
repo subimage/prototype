@@ -32,7 +32,6 @@ var Fixtures = {
     'X-JSON': '{"test": "hello #éà"}'
   }
 };
-
 var responderCounter = 0;
 
 // lowercase comparison because of MSIE which presents HTML tags in uppercase
@@ -63,6 +62,46 @@ suite("AJAX Interactions",function(){
     Ajax.Responders.responders = [Ajax.Responders.responders[0]];
   });
   
+  suite("HTTP Basic Authentication", function() {
+    // Mock access to XHR via Sinon.js
+    var ajaxStub;
+    var mockTransport = {
+      open: sinon.stub()
+    };
+    setup(function(){
+      ajaxStub = sinon.stub(Ajax, 'getTransport').returns(mockTransport);
+    });
+    teardown(function(){
+      ajaxStub.restore();
+    });
+
+    test("Initializes with undefined username / password", function() {
+      var req = new Ajax.Request(
+        "ajaxtest_assets/empty.html", {}
+      );
+      assert.equal(undefined, req.options.username);
+      assert.equal(undefined, req.options.password);
+    });
+    test("Calls transport.open with specified username / password", function() {
+      var url = 'ajaxtest_assets/empty.html';
+      var user = 'foo';
+      var pass = 'bar';
+      var opts = {
+        username: user,
+        password: pass,
+        asynchronous: false,
+        method: 'GET'
+      }
+      var req = new Ajax.Request(url, opts);
+      assert.ok(
+        mockTransport.open.calledWith(
+          opts.method, url, opts.asynchronous, user, pass
+        )
+      );
+      
+    });
+  });
+
   test("Synchronous Request", function() {
     assert.equal("", $("content").innerHTML);
     
