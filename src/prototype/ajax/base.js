@@ -9,6 +9,8 @@ Ajax.Base = Class.create({
       parameters:   '',
       evalJSON:     true,
       evalJS:       true,
+      // Emulate HTTP methods via POST & X-Http-Method-Override for older servers?
+      emulateHTTP:  false,
       username:     undefined,
       password:     undefined
     };

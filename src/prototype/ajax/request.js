@@ -179,13 +179,22 @@ Ajax.Request = Class.create(Ajax.Base, {
   request: function(url) {
     this.url = url;
     this.method = this.options.method;
+
+    var standardHttpMethods = ['get', 'head', 'post', 'put', 'delete'];
+
     var params = Object.isString(this.options.parameters) ?
           this.options.parameters :
           Object.toQueryString(this.options.parameters);
 
-    if (!['get', 'post'].include(this.method)) {
-      // simulate other verbs over post
+    if (
+      (this.options.emulateHTTP && !['get', 'post'].include(this.method)) ||
+      !standardHttpMethods.include(this.method)
+    ) {
+      // Simulate other verbs over post...
+      // Old Rails
       params += (params ? '&' : '') + "_method=" + this.method;
+      // ASP.net, newer versions of Rails, etc.
+      this.transport.setRequestHeader('X-Http-Method-Override', this.method);
       this.method = 'post';
     }
 
@@ -214,7 +223,11 @@ Ajax.Request = Class.create(Ajax.Base, {
       this.transport.onreadystatechange = this.onStateChange.bind(this);
       this.setRequestHeaders();
 
-      this.body = this.method == 'post' ? (this.options.postBody || params) : null;
+      if(['post', 'put'].include(this.method)) {
+        this.body = (this.options.postBody || params);
+      } else {
+        this.body = null;
+      }
       this.transport.send(this.body);
 
       /* Force Firefox to handle ready state 4 for synchronous requests */
@@ -240,10 +253,11 @@ Ajax.Request = Class.create(Ajax.Base, {
       'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
     };
 
-    if (this.method == 'post') {
-      headers['Content-type'] = this.options.contentType +
-        (this.options.encoding ? '; charset=' + this.options.encoding : '');
+    // Allow Content-type to be to set for all HTTP methods, not just POST.
+    headers['Content-type'] = this.options.contentType +
+      (this.options.encoding ? '; charset=' + this.options.encoding : '');
 
+    if (this.method == 'post') {
       /* Force "Connection: close" for older Mozilla browsers to work
        * around a bug where XMLHttpRequest sends an incorrect
        * Content-length header. See Mozilla Bugzilla #246651.
