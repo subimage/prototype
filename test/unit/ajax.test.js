@@ -252,6 +252,46 @@ suite("AJAX Interactions",function(){
     }));
   });
   
+  suite("Posting Data In Request Body", function() {
+    // Mock access to XHR via Sinon.js
+    var ajaxStub;
+    var mockTransport = {
+      open: sinon.stub(),
+      send: sinon.stub(),
+      setRequestHeader: sinon.stub()
+    };
+    var url = "/inspect";
+    var opts = {
+      asynchronous: false,
+      postBody: JSON.stringify({ foo: 'bar'})
+    };
+    setup(function(){
+      ajaxStub = sinon.stub(Ajax, 'getTransport').returns(mockTransport);
+    });
+    teardown(function(){
+      ajaxStub.restore();
+    });
+    
+    test("Should Work For PUT", function(){
+      opts.method = 'put';
+      var req = new Ajax.Request(url, opts);
+      assert.equal(req.body, opts.postBody);
+      assert.ok(
+        mockTransport.send.calledWith(opts.postBody)
+      );
+    });
+
+    test("Should Work For POST", function(){
+      opts.method = 'post';
+      var req = new Ajax.Request(url, opts);
+      assert.equal(req.body, opts.postBody);
+      assert.ok(
+        mockTransport.send.calledWith(opts.postBody)
+      );
+    });
+
+  });
+
   test("onCreate Callback",function(done) {
     new Ajax.Request("ajaxtest_assets/content.html", extendDefault({
       onCreate: function(transport) { assert.equal(0, transport.readyState) },
