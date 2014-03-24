@@ -352,8 +352,8 @@ suite("Form Interactions",function(){
     assert(request.url.endsWith("ajaxtest_assets/empty.js"));
     assert.equal(4, request.options.parameters['val1']);
     assert.equal('hello', request.options.parameters['val2']);
-    assert.equal("post", request.method);
-    assert.equal("put", request.parameters['_method']);
+    assert.equal("put", request.method);
+    assert.equal(null, request.parameters['_method']);
 
     // with empty action attribute
     request = $("ffe").request({ method: 'post' });

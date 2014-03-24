@@ -1567,7 +1567,11 @@ Ajax.Base = Class.create({
       encoding:     'UTF-8',
       parameters:   '',
       evalJSON:     true,
-      evalJS:       true
+      evalJS:       true,
+      // Emulate HTTP methods via POST & X-Http-Method-Override for older servers?
+      emulateHTTP:  false,
+      username:     undefined,
+      password:     undefined
     };
     Object.extend(this.options, options || { });
     this.options.method = this.options.method.toLowerCase();
@@ -1585,12 +1589,19 @@ Ajax.Request = Class.create(Ajax.Base, {
   request: function(url) {
     this.url = url;
     this.method = this.options.method;
+    var standardHttpMethods = ['get', 'head', 'post', 'put', 'delete'];
     var params = Object.isString(this.options.parameters) ?
           this.options.parameters :
           Object.toQueryString(this.options.parameters);
-    if (!['get', 'post'].include(this.method)) {
-      // simulate other verbs over post
+    if (
+      (this.options.emulateHTTP && !['get', 'post'].include(this.method)) ||
+      !standardHttpMethods.include(this.method)
+    ) {
+      // Simulate other verbs over post...
+      // Old Rails
       params += (params ? '&' : '') + "_method=" + this.method;
+      // ASP.net, newer versions of Rails, etc.
+      this.transport.setRequestHeader('X-Http-Method-Override', this.method);
       this.method = 'post';
     }
     if (params && this.method === 'get') {
@@ -1602,12 +1613,21 @@ Ajax.Request = Class.create(Ajax.Base, {
       var response = new Ajax.Response(this);
       if (this.options.onCreate) this.options.onCreate(response);
       Ajax.Responders.dispatch('onCreate', this, response);
-      this.transport.open(this.method.toUpperCase(), this.url,
-        this.options.asynchronous);
+      this.transport.open(
+        this.method.toUpperCase(), 
+        this.url,
+        this.options.asynchronous,
+        this.options.username,
+        this.options.password
+      );
       if (this.options.asynchronous) this.respondToReadyState.bind(this).defer(1);
       this.transport.onreadystatechange = this.onStateChange.bind(this);
       this.setRequestHeaders();
-      this.body = this.method == 'post' ? (this.options.postBody || params) : null;
+      if(['post', 'put'].include(this.method)) {
+        this.body = (this.options.postBody || params);
+      } else {
+        this.body = null;
+      }
       this.transport.send(this.body);
       /* Force Firefox to handle ready state 4 for synchronous requests */
       if (!this.options.asynchronous && this.transport.overrideMimeType)
@@ -1628,9 +1648,10 @@ Ajax.Request = Class.create(Ajax.Base, {
       'X-Prototype-Version': Prototype.Version,
       'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
     };
+    // Allow Content-type to be to set for all HTTP methods, not just POST.
+    headers['Content-type'] = this.options.contentType +
+      (this.options.encoding ? '; charset=' + this.options.encoding : '');
     if (this.method == 'post') {
-      headers['Content-type'] = this.options.contentType +
-        (this.options.encoding ? '; charset=' + this.options.encoding : '');
       /* Force "Connection: close" for older Mozilla browsers to work
        * around a bug where XMLHttpRequest sends an incorrect
        * Content-length header. See Mozilla Bugzilla #246651.

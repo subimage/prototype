@@ -14,13 +14,13 @@
     <li><a href="selectortests.html">Selector Interaction Tests</a></li>
     <li><a href="layouttests.html">Layout Tests</a></li>
   </ul>
-  <div id="mocha"></div>
-  <script src="../dist/prototype.min.js"></script>
+	<div id="mocha"></div>
+  <script src="../dist/prototype.js"></script>
   <script src="es5polyfill.js"></script>
-  <script src="mocha.js"></script>
-  <script src="proclaim.js"></script>
-  <script>mocha.setup('tdd')</script>
-  <script>
+  <script src="../node_modules/mocha/mocha.js"></script>
+  <script src="../node_modules/proclaim/lib/proclaim.js"></script>
+	<script>mocha.setup('tdd')</script>
+	<script>
     if(typeof console === 'undefined')
     {
       var console = {'log' : function() {} };

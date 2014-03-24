@@ -8,7 +8,11 @@ Ajax.Base = Class.create({
       encoding:     'UTF-8',
       parameters:   '',
       evalJSON:     true,
-      evalJS:       true
+      evalJS:       true,
+      // Emulate HTTP methods via POST & X-Http-Method-Override for older servers?
+      emulateHTTP:  false,
+      username:     undefined,
+      password:     undefined
     };
     Object.extend(this.options, options || { });
 

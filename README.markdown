@@ -63,15 +63,12 @@ Running Unit Tests
 
 New tests have been written with [MochaJS](http://visionmedia.github.io/mocha/) and [ProclaimJS](https://github.com/rowanmanning/proclaim) assertions. The AJAX and Form Namespaces require a webserver to echo responses which is built into the Mocha Test script to launch a [NodeJS](http://nodejs.org/) Webserver. Mocha can also run tests using [PhantomJS](http://phantomjs.org/) which allows command line testing.
 
- 1. Install NodeJS
- 2. `$ npm -g install mocha phantomjs mocha-phantomjs open`
+ 1. Install NPM dependencies (will install dependencies from package.json)
+ 2. `$ npm -g install`
  3. define your Node Modules directory
- 
     OSX/Linux : `$ export NODE_PATH=/usr/local/lib/node_modules`
  4. In the root PrototypeJS directory run `$ mocha` which will run by default in PhantomJS
-
     to test in other browsers set the environment variable BROWSERS to a comma seperated list of browsers
-    
     `$ env BROWSERS=default,chrome,firefox,safari mocha`
  
 

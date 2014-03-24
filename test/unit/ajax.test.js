@@ -32,7 +32,6 @@ var Fixtures = {
     'X-JSON': '{"test": "hello #éà"}'
   }
 };
-
 var responderCounter = 0;
 
 // lowercase comparison because of MSIE which presents HTML tags in uppercase
@@ -63,6 +62,46 @@ suite("AJAX Interactions",function(){
     Ajax.Responders.responders = [Ajax.Responders.responders[0]];
   });
   
+  suite("HTTP Basic Authentication", function() {
+    // Mock access to XHR via Sinon.js
+    var ajaxStub;
+    var mockTransport = {
+      open: sinon.stub()
+    };
+    setup(function(){
+      ajaxStub = sinon.stub(Ajax, 'getTransport').returns(mockTransport);
+    });
+    teardown(function(){
+      ajaxStub.restore();
+    });
+
+    test("Initializes with undefined username / password", function() {
+      var req = new Ajax.Request(
+        "ajaxtest_assets/empty.html", {}
+      );
+      assert.equal(undefined, req.options.username);
+      assert.equal(undefined, req.options.password);
+    });
+    test("Calls transport.open with specified username / password", function() {
+      var url = 'ajaxtest_assets/empty.html';
+      var user = 'foo';
+      var pass = 'bar';
+      var opts = {
+        username: user,
+        password: pass,
+        asynchronous: false,
+        method: 'GET'
+      }
+      var req = new Ajax.Request(url, opts);
+      assert.ok(
+        mockTransport.open.calledWith(
+          opts.method, url, opts.asynchronous, user, pass
+        )
+      );
+      
+    });
+  });
+
   test("Synchronous Request", function() {
     assert.equal("", $("content").innerHTML);
     
@@ -213,6 +252,126 @@ suite("AJAX Interactions",function(){
     }));
   });
   
+  suite("Sending Data In Request Body", function() {
+    // Mock access to XHR via Sinon.js
+    var ajaxStub;
+    var mockTransport = {
+      open: sinon.stub(),
+      send: sinon.stub(),
+      setRequestHeader: sinon.stub()
+    };
+    var url = "/inspect";
+    var opts = {
+      asynchronous: false,
+      postBody: JSON.stringify({ foo: 'bar'})
+    };
+    setup(function(){
+      ajaxStub = sinon.stub(Ajax, 'getTransport').returns(mockTransport);
+    });
+    teardown(function(){
+      ajaxStub.restore();
+    });
+    
+    test("Should Work For PUT", function(){
+      opts.method = 'put';
+      var req = new Ajax.Request(url, opts);
+      assert.equal(req.body, opts.postBody);
+      assert.ok(
+        mockTransport.send.calledWith(opts.postBody)
+      );
+    });
+
+    test("Should Work For POST", function(){
+      opts.method = 'post';
+      var req = new Ajax.Request(url, opts);
+      assert.equal(req.body, opts.postBody);
+      assert.ok(
+        mockTransport.send.calledWith(opts.postBody)
+      );
+    });
+
+  });
+
+  // Ensure that we're following the XMLHttpRequest draft specification,
+  // supporting the methods outlined here:
+  //
+  // https://dvcs.w3.org/hg/xhr/raw-file/tip/Overview.html
+  //
+  // Additionally, this article outlines what old browsers support what
+  // methods.
+  // http://annevankesteren.nl/2007/10/http-method-support
+  suite("HTTP Method Support", function(){
+    // Mock access to XHR via Sinon.js
+    var ajaxStub;
+    var mockTransport = {
+      open: sinon.stub(),
+      send: sinon.stub(),
+      setRequestHeader: sinon.stub()
+    };
+    var standardMethods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE'];
+    var url = "/inspect";
+    var opts = { asynchronous: false };
+    setup(function(){
+      ajaxStub = sinon.stub(Ajax, 'getTransport').returns(mockTransport);
+    });
+    teardown(function(){
+      ajaxStub.restore();
+    });
+
+    // https://prototype.lighthouseapp.com/projects/8886/tickets/583-simulation-of-put-over-post-not-working-correctly
+    test("Content-Type able to be set on all methods", function(){
+      standardMethods.each(function(m){
+        opts.method = m;
+        opts.contentType = 'text/xml';
+        var req = new Ajax.Request(url, opts);
+        //console.log(mockTransport.setRequestHeader.lastCall);
+        assert.ok(
+          mockTransport.setRequestHeader.calledWith('Content-type', "text/xml; charset=UTF-8"),
+          ("Content-type not set for method: "+m)
+        );
+      });
+    });
+
+    suite("Default, options.emulateHTTP = false", function(){
+      test("Standard verbs not transformed, no header set", function(){
+        standardMethods.each(function(m){
+          opts.method = m;
+          var req = new Ajax.Request(url, opts);
+          assert.equal(
+            req.method, m.toLowerCase(),
+            ("Method "+m+" unexpectedly emulated via "+req.method)
+          );
+          assert.notOk(
+            mockTransport.setRequestHeader.calledWith('X-Http-Method-Override')
+          );
+        });
+      });
+    });
+
+    // For supporting the old way of faking all requests if browsers or
+    // server can't handle "new" RESTful methods.
+    suite("options.emulateHTTP = true", function(){
+      setup(function(){
+        opts.emulateHTTP = true;
+      });
+      test("Fakes everything but POST / GET requests", function(){
+        var methods = ['OPTIONS', 'PUT', 'DELETE'];
+        methods.each(function(m){
+          opts.method = m;
+          var req = new Ajax.Request(url, opts);
+          assert.equal(
+            'post', req.method,
+            ("Method "+m+" unexpectedly not emulated via POST")
+          );
+          assert.ok(
+            mockTransport.setRequestHeader.calledWith('X-Http-Method-Override', m.toLowerCase()),
+            ("RequestHeader not set for: "+m)
+          );
+        });
+      });
+    });
+  });
+
   test("onCreate Callback",function(done) {
     new Ajax.Request("ajaxtest_assets/content.html", extendDefault({
       onCreate: function(transport) { assert.equal(0, transport.readyState) },
